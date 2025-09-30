@@ -13,7 +13,7 @@ class TimBurtonAuth {
     
     // Firebase configuration (public - safe to expose)
     this.firebaseConfig = {
-      apiKey: "AIzaSyA0ps2qHN9rFsb4zF3Nmy27bAW6pcpBRFY",
+      apiKey: "AIzaSyA0ps2qHN9rFsb4zF3NmyZ7bAW6pcpBRFY",
       authDomain: "tim-burton-docuseries.firebaseapp.com",
       projectId: "tim-burton-docuseries"
     };
