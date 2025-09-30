@@ -1,0 +1,10 @@
+# Cloudflare Pages configuration
+# This project does NOT use Cloudflare Functions/Workers
+# All backend logic is handled by Firebase Functions
+
+name = "tim-burton-docuseries"
+compatibility_date = "2024-01-01"
+
+# Disable Cloudflare Functions
+[functions]
+# No functions defined - this is a static site
