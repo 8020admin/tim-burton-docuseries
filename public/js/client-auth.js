@@ -18,10 +18,6 @@ class TimBurtonAuth {
       projectId: "tim-burton-docuseries"
     };
 
-    // Debug: Log API key to verify it's correct
-    console.log('🔑 Firebase API Key loaded:', this.firebaseConfig.apiKey);
-    console.log('🔧 Firebase Config:', this.firebaseConfig);
-
     // Initialize Firebase Auth
     this.initFirebase();
     
