@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tim Burton Docuseries - API & Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tim Burton Docuseries - API & Testing</h1>
+        
+        <div class="section">
+            <h2>🚀 Deployment Status</h2>
+            <div class="status success">
+                ✅ Successfully deployed to Cloudflare Pages
+            </div>
+            <p>This is the API and testing environment for the Tim Burton Docuseries project.</p>
+        </div>
+        
+        <div class="section">
+            <h2>🧪 Testing Environment</h2>
+            <p>Test the complete authentication and payment flow:</p>
+            <a href="test.html" class="button">Open Test Environment</a>
+            <p><small>Includes: Authentication, Stripe Integration, Purchase Options Modal, Content Access Control</small></p>
+        </div>
+        
+        <div class="section">
+            <h2>📁 Available Files</h2>
+            <ul>
+                <li><strong>JavaScript Files:</strong></li>
+                <ul>
+                    <li><a href="js/client-auth.js">client-auth.js</a> - Authentication system</li>
+                    <li><a href="js/webflow-auth-handlers.js">webflow-auth-handlers.js</a> - Webflow integration</li>
+                    <li><a href="js/content-access.js">content-access.js</a> - Content access control</li>
+                    <li><a href="js/button-state-manager.js">button-state-manager.js</a> - Button state management</li>
+                    <li><a href="js/stripe-integration.js">stripe-integration.js</a> - Stripe payment integration</li>
+                </ul>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🔧 Integration</h2>
+            <p>To integrate with Webflow, add these scripts to your project:</p>
+            <pre><code>&lt;script src="https://accounts.google.com/gsi/client"&gt;&lt;/script&gt;
+&lt;script src="https://your-domain.pages.dev/js/client-auth.js"&gt;&lt;/script&gt;
+&lt;script src="https://your-domain.pages.dev/js/webflow-auth-handlers.js"&gt;&lt;/script&gt;
+&lt;script src="https://your-domain.pages.dev/js/content-access.js"&gt;&lt;/script&gt;
+&lt;script src="https://your-domain.pages.dev/js/button-state-manager.js"&gt;&lt;/script&gt;
+&lt;script src="https://your-domain.pages.dev/js/stripe-integration.js"&gt;&lt;/script&gt;</code></pre>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Features</h2>
+            <ul>
+                <li>✅ Google Sign-In & Email/Password Authentication</li>
+                <li>✅ Session Persistence</li>
+                <li>✅ Stripe Payment Integration</li>
+                <li>✅ Purchase Options Modal</li>
+                <li>✅ Content Access Control</li>
+                <li>✅ Loading Spinners</li>
+                <li>✅ Automatic Flow Continuation</li>
+                <li>✅ Responsive Design</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

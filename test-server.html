@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tim Burton Docuseries - Test Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .sign-in-btn { background: #007bff; color: white; }
+        .sign-out-btn { background: #dc3545; color: white; }
+        .rent-btn { background: #28a745; color: white; }
+        .buy-btn { background: #ffc107; color: black; }
+        .watch-now-btn { background: #6f42c1; color: white; }
+        
+        .content-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+        .auth-only { background: #e3f2fd; }
+        .paid-only { background: #e8f5e8; }
+        .boxset-only { background: #fff3e0; }
+        .upgrade-prompt { background: #fce4ec; }
+        
+        .user-info {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        
+        .auth-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .auth-tab {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .auth-tab.active {
+            border-bottom-color: #007bff;
+        }
+        
+        .auth-tab-content {
+            display: none;
+        }
+        
+        .auth-tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin: 10px 0;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Purchase Options Modal */
+        .purchase-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .purchase-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .purchase-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .purchase-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .purchase-modal .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .purchase-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .purchase-option {
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .purchase-option:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        }
+
+        .purchase-option.featured {
+            border-color: #007bff;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+            position: relative;
+        }
+
+        .purchase-option.featured::before {
+            content: "Most Popular";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #007bff;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .purchase-option h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .purchase-option .price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 10px 0;
+        }
+
+        .purchase-option .description {
+            color: #666;
+            margin: 10px 0 20px 0;
+            line-height: 1.4;
+        }
+
+        .purchase-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+
+        .purchase-btn:hover {
+            background: #0056b3;
+        }
+
+        .purchase-option.featured .purchase-btn {
+            background: #28a745;
+        }
+
+        .purchase-option.featured .purchase-btn:hover {
+            background: #218838;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .purchase-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .purchase-modal-content {
+                margin: 20px;
+                padding: 20px;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tim Burton Docuseries - Test Environment</h1>
+        
+        <!-- Button States -->
+        <div class="test-section">
+            <h3>Button States (Dynamic)</h3>
+            <div class="button-group">
+                <button data-button-type="sign-in" class="sign-in-btn">Sign In</button>
+                <button data-button-type="sign-out" class="sign-out-btn" style="display: none;">Sign Out</button>
+                <button data-button-type="rent" class="rent-btn">Rent ($14.99)</button>
+                <button data-button-type="buy" class="buy-btn">Buy</button>
+                <button data-button-type="watch-now" class="watch-now-btn" style="display: none;">Watch Now</button>
+            </div>
+        </div>
+        
+        <!-- User Info -->
+        <div class="user-info" id="user-info">
+            <h4>User Information</h4>
+            <p><strong>Name:</strong> <span id="user-name">Loading...</span></p>
+            <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+            <p><strong>Purchase Status:</strong> <span id="purchase-status">Loading...</span></p>
+            <p><strong>Button State:</strong> <span id="button-state">Loading...</span></p>
+        </div>
+        
+        <!-- Content Access Control -->
+        <div class="test-section">
+            <h3>Content Access Control</h3>
+            
+            <div class="content-section" data-show-not-signed-in="true">
+                <h4>Public Content (Not Signed In)</h4>
+                <p>This content is visible to everyone, including non-authenticated users.</p>
+            </div>
+            
+            <div class="content-section auth-only" data-auth-required="true">
+                <h4>Authenticated Content</h4>
+                <p>This content is only visible to signed-in users.</p>
+            </div>
+            
+            <div class="content-section paid-only" data-purchase-required="true">
+                <h4>Paid Content</h4>
+                <p>This content is only visible to users who have made a purchase.</p>
+            </div>
+            
+            <div class="content-section boxset-only" data-boxset-required="true">
+                <h4>Box Set Content</h4>
+                <p>This content is only visible to users who purchased the box set.</p>
+            </div>
+            
+            <div class="content-section upgrade-prompt" data-upgrade-prompt="true">
+                <h4>Upgrade Prompt</h4>
+                <p>This shows for regular purchasers to upgrade to box set.</p>
+            </div>
+        </div>
+        
+        <!-- Purchase Options Modal -->
+        <div class="test-section">
+            <h3>Purchase Options</h3>
+            <p>Click "Buy" to see the purchase options modal (currently shows browser alert for testing).</p>
+        </div>
+    </div>
+    
+    <!-- Authentication Modal -->
+    <div class="auth-modal" id="auth-modal">
+        <div class="auth-modal-content">
+            <button class="close-btn" id="auth-close">&times;</button>
+            <h2>Sign In to Watch</h2>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="signin">Sign In</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
+            </div>
+            
+            <!-- Sign In Tab -->
+            <div class="auth-tab-content active" id="signin-tab">
+                <div id="google-signin-button" class="google-signin-container"></div>
+                
+                <div style="text-align: center; margin: 20px 0; color: #666;">or</div>
+                
+                <form id="email-signin-form">
+                    <div class="form-group">
+                        <input type="email" id="signin-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signin-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Sign In</button>
+                    <a href="#" id="forgot-password" style="text-align: center; display: block; color: #007bff; text-decoration: none; margin-top: 10px;">Forgot Password?</a>
+                </form>
+            </div>
+            
+            <!-- Sign Up Tab -->
+            <div class="auth-tab-content" id="signup-tab">
+                <div id="google-signup-button" class="google-signin-container"></div>
+                
+                <div style="text-align: center; margin: 20px 0; color: #666;">or</div>
+                
+                <form id="email-signup-form">
+                    <div class="form-group">
+                        <input type="text" id="signup-name" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signup-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Sign Up</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Options Modal -->
+    <div class="purchase-modal" id="purchase-options-modal" style="display: none;">
+        <div class="purchase-modal-content">
+            <div class="purchase-modal-header">
+                <h2>Choose Your Purchase</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            
+            <div class="purchase-options">
+                <div class="purchase-option">
+                    <h3>Regular Purchase</h3>
+                    <p class="price">$24.99</p>
+                    <p class="description">4 episodes of the docuseries</p>
+                    <button id="regular-purchase-btn" class="purchase-btn">Purchase</button>
+                </div>
+                
+                <div class="purchase-option featured">
+                    <h3>Box Set</h3>
+                    <p class="price">$74.99</p>
+                    <p class="description">4 episodes + 40 hours of extras</p>
+                    <button id="box-set-purchase-btn" class="purchase-btn">Purchase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load all the JavaScript files -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="src/js/client-auth.js"></script>
+    <script src="src/js/webflow-auth-handlers.js"></script>
+    <script src="src/js/content-access.js"></script>
+    <script src="src/js/button-state-manager.js"></script>
+    <script src="src/js/stripe-integration.js"></script>
+    
+    <script>
+        // Update user info display
+        document.addEventListener('timBurtonAuth', (event) => {
+            const userInfo = document.getElementById('user-info');
+            const userName = document.getElementById('user-name');
+            const userEmail = document.getElementById('user-email');
+            const purchaseStatus = document.getElementById('purchase-status');
+            const buttonState = document.getElementById('button-state');
+            
+            if (event.detail.isSignedIn) {
+                userInfo.style.display = 'block';
+                userName.textContent = event.detail.user?.name || 'Unknown';
+                userEmail.textContent = event.detail.user?.email || 'Unknown';
+                purchaseStatus.textContent = event.detail.hasPurchase ? 
+                    `${event.detail.purchaseStatus?.type || 'Unknown'} (${event.detail.purchaseStatus?.hasAccess ? 'Active' : 'Inactive'})` : 
+                    'No Purchase';
+                buttonState.textContent = event.detail.buttonState || 'Unknown';
+            } else {
+                userInfo.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

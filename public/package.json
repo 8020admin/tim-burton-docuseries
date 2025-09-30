@@ -1,0 +1,26 @@
+{
+  "name": "tim-burton-docuseries-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Tim Burton Docuseries streaming platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "build": "echo 'No build needed for static files'",
+    "deploy": "echo 'Deploy to Cloudflare Pages'"
+  },
+  "keywords": [
+    "streaming",
+    "docuseries",
+    "tim-burton",
+    "webflow",
+    "stripe",
+    "firebase"
+  ],
+  "author": "Tim Burton Docuseries Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tim-burton-docuseries.git"
+  },
+  "homepage": "https://your-domain.pages.dev"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "tim-burton-docuseries-functions",
+  "description": "Backend API for Tim Burton Docuseries Platform",
+  "scripts": {
+    "lint": "echo 'Linting skipped'"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.8.0"
+  },
+  "private": true
+}
