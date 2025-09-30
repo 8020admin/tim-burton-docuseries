@@ -9,9 +9,68 @@ class TimBurtonAuth {
     this.currentUser = null;
     this.customToken = null;
     this.purchaseStatus = null;
+    this.firebaseAuth = null;
+    
+    // Firebase configuration (public - safe to expose)
+    this.firebaseConfig = {
+      apiKey: "AIzaSyDWN7XRzVHKqB9jmJxQ8F0wZjKvX5sYQqM",
+      authDomain: "tim-burton-docuseries.firebaseapp.com",
+      projectId: "tim-burton-docuseries"
+    };
+    
+    // Initialize Firebase Auth
+    this.initFirebase();
     
     // Initialize Google Sign-In
     this.initGoogleSignIn();
+  }
+  
+  /**
+   * Initialize Firebase Auth
+   */
+  initFirebase() {
+    // Load Firebase scripts if not already loaded
+    if (!window.firebase) {
+      const scripts = [
+        'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
+        'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js'
+      ];
+      
+      let loadedCount = 0;
+      scripts.forEach(src => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+          loadedCount++;
+          if (loadedCount === scripts.length) {
+            this.setupFirebase();
+          }
+        };
+        document.head.appendChild(script);
+      });
+    } else {
+      this.setupFirebase();
+    }
+  }
+  
+  /**
+   * Setup Firebase after scripts load
+   */
+  setupFirebase() {
+    if (window.firebase && !firebase.apps.length) {
+      firebase.initializeApp(this.firebaseConfig);
+      this.firebaseAuth = firebase.auth();
+      
+      // Listen for auth state changes
+      this.firebaseAuth.onAuthStateChanged(async (user) => {
+        if (user) {
+          await this.handleFirebaseAuthSuccess(user);
+        }
+      });
+      
+      // Try to restore session
+      this.restoreSession();
+    }
   }
 
   /**
@@ -78,89 +137,153 @@ class TimBurtonAuth {
   }
 
   /**
-   * Handle email/password sign in
+   * Handle Firebase Auth success
+   */
+  async handleFirebaseAuthSuccess(firebaseUser) {
+    try {
+      // Get ID token from Firebase
+      const idToken = await firebaseUser.getIdToken();
+      
+      // Sync with backend (creates/updates user in Firestore)
+      await this.syncWithBackend(idToken, firebaseUser);
+      
+      // Fetch purchase status
+      await this.fetchPurchaseStatus();
+      
+      // Trigger custom event for Webflow
+      this.dispatchAuthEvent('signIn', this.currentUser);
+      
+      console.log('Authentication successful:', this.currentUser);
+    } catch (error) {
+      console.error('Auth success handler error:', error);
+    }
+  }
+  
+  /**
+   * Sync Firebase user with backend
+   */
+  async syncWithBackend(idToken, firebaseUser) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        this.currentUser = result.user;
+        this.customToken = idToken;
+        
+        // Store in localStorage
+        localStorage.setItem('timBurtonUser', JSON.stringify(result.user));
+        localStorage.setItem('timBurtonToken', idToken);
+      }
+    } catch (error) {
+      console.error('Backend sync error:', error);
+    }
+  }
+  
+  /**
+   * Handle email/password sign in (using Firebase Auth)
    */
   async handleEmailSignIn(email, password) {
     try {
-      const result = await this.signInWithEmail(email, password);
-      
-      if (result.success) {
-        this.currentUser = result.user;
-        this.customToken = result.customToken;
-        
-        // Store user data in localStorage
-        localStorage.setItem('timBurtonUser', JSON.stringify(result.user));
-        localStorage.setItem('timBurtonToken', result.customToken);
-        
-        // Fetch purchase status
-        await this.fetchPurchaseStatus();
-        
-        // Trigger custom event for Webflow
-        this.dispatchAuthEvent('signIn', result.user);
-        
-        console.log('Email sign-in successful:', result.user);
-        return { success: true };
-      } else {
-        throw new Error(result.error || 'Sign-in failed');
+      if (!this.firebaseAuth) {
+        throw new Error('Firebase Auth not initialized');
       }
+      
+      // Sign in with Firebase Auth
+      const userCredential = await this.firebaseAuth.signInWithEmailAndPassword(email, password);
+      
+      // The onAuthStateChanged listener will handle the rest
+      return { success: true };
+      
     } catch (error) {
       console.error('Email Sign-In Error:', error);
-      this.dispatchAuthEvent('signInError', { error: error.message });
-      return { success: false, error: error.message };
+      let errorMessage = 'Sign-in failed';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      }
+      
+      this.dispatchAuthEvent('signInError', { error: errorMessage });
+      return { success: false, error: errorMessage };
     }
   }
 
   /**
-   * Handle email/password sign up
+   * Handle email/password sign up (using Firebase Auth)
    */
   async handleEmailSignUp(email, password, name) {
     try {
-      const result = await this.signUpWithEmail(email, password, name);
-      
-      if (result.success) {
-        this.currentUser = result.user;
-        this.customToken = result.customToken;
-        
-        // Store user data in localStorage
-        localStorage.setItem('timBurtonUser', JSON.stringify(result.user));
-        localStorage.setItem('timBurtonToken', result.customToken);
-        
-        // Fetch purchase status (will be null for new users)
-        await this.fetchPurchaseStatus();
-        
-        // Trigger custom event for Webflow
-        this.dispatchAuthEvent('signUp', result.user);
-        
-        console.log('Email sign-up successful:', result.user);
-        return { success: true };
-      } else {
-        throw new Error(result.error || 'Sign-up failed');
+      if (!this.firebaseAuth) {
+        throw new Error('Firebase Auth not initialized');
       }
+      
+      // Create user with Firebase Auth
+      const userCredential = await this.firebaseAuth.createUserWithEmailAndPassword(email, password);
+      
+      // Update display name
+      if (name && userCredential.user) {
+        await userCredential.user.updateProfile({
+          displayName: name
+        });
+      }
+      
+      // The onAuthStateChanged listener will handle the rest
+      return { success: true };
+      
     } catch (error) {
       console.error('Email Sign-Up Error:', error);
-      this.dispatchAuthEvent('signUpError', { error: error.message });
-      return { success: false, error: error.message };
+      let errorMessage = 'Sign-up failed';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email already exists';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak (minimum 6 characters)';
+      }
+      
+      this.dispatchAuthEvent('signUpError', { error: errorMessage });
+      return { success: false, error: errorMessage };
     }
   }
 
   /**
-   * Handle password reset
+   * Handle password reset (using Firebase Auth)
    */
   async handlePasswordReset(email) {
     try {
-      const result = await this.resetPassword(email);
-      
-      if (result.success) {
-        this.dispatchAuthEvent('passwordResetSent', { email });
-        console.log('Password reset email sent to:', email);
-        return { success: true };
-      } else {
-        throw new Error(result.error || 'Password reset failed');
+      if (!this.firebaseAuth) {
+        throw new Error('Firebase Auth not initialized');
       }
+      
+      // Send password reset email via Firebase
+      await this.firebaseAuth.sendPasswordResetEmail(email);
+      
+      this.dispatchAuthEvent('passwordResetSent', { email });
+      console.log('Password reset email sent to:', email);
+      return { success: true };
+      
     } catch (error) {
       console.error('Password Reset Error:', error);
-      this.dispatchAuthEvent('passwordResetError', { error: error.message });
-      return { success: false, error: error.message };
+      let errorMessage = 'Password reset failed';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      }
+      
+      this.dispatchAuthEvent('passwordResetError', { error: errorMessage });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -272,6 +395,11 @@ class TimBurtonAuth {
    * Sign out user
    */
   signOut() {
+    // Sign out from Firebase Auth
+    if (this.firebaseAuth) {
+      this.firebaseAuth.signOut();
+    }
+    
     this.currentUser = null;
     this.customToken = null;
     this.purchaseStatus = null;
