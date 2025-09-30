@@ -1,0 +1,16 @@
+# Cloudflare Pages - Ignore Firebase Functions
+functions/
+src/backend/
+firebase.json
+firestore.rules
+firestore.indexes.json
+.firebaserc
+
+# Development files
+node_modules/
+*.log
+.env
+.env.*
+
+# Test files
+test-*.html
