@@ -402,6 +402,7 @@ function initializeAuthHandlers() {
   document.addEventListener('click', (e) => {
     if (e.target.matches('[data-action="close-modal"], [data-modal-action="close"]')) {
       e.preventDefault();
+      e.stopPropagation();
       
       // Find the closest modal and close it
       const modal = e.target.closest('[data-modal]');
