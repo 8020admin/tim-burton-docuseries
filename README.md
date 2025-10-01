@@ -113,36 +113,50 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 
 ```
 prototype/
-├── public/                        # Cloudflare Pages deployment
-│   ├── js/                       # Client-side JavaScript
-│   │   ├── client-auth.js       # Firebase Auth integration
+├── public/                      # 🌐 Production Frontend (Cloudflare Pages)
+│   ├── js/                     # Client-side JavaScript
+│   │   ├── client-auth.js     # Firebase Auth integration
 │   │   ├── webflow-auth-handlers.js
-│   │   ├── content-access.js    # Visibility control
+│   │   ├── content-access.js  # Visibility control
 │   │   ├── button-state-manager.js
 │   │   └── stripe-integration.js
-│   ├── test.html                # Test page
-│   └── index.html               # Landing page
+│   ├── test.html              # Complete test environment
+│   ├── index.html             # Landing page
+│   └── README.md              # Public folder docs
 │
-├── src/
-│   └── backend/
-│       └── functions/           # Firebase Cloud Functions
-│           ├── src/
-│           │   ├── index.ts    # Main entry point
-│           │   ├── auth.ts     # Auth endpoints
-│           │   ├── payments.ts # Payment endpoints
-│           │   ├── stripe.ts   # Stripe integration
-│           │   ├── content.ts  # Content delivery
-│           │   └── users.ts    # User management
-│           └── package.json
+├── src/backend/functions/      # 🔥 Firebase Cloud Functions
+│   ├── src/                   # TypeScript source
+│   │   ├── index.ts          # Main entry point
+│   │   ├── auth.ts           # Authentication endpoints
+│   │   ├── payments.ts       # Payment processing
+│   │   ├── stripe.ts         # Stripe integration
+│   │   ├── content.ts        # Content delivery
+│   │   └── users.ts          # User management
+│   ├── lib/                  # Compiled JavaScript
+│   ├── package.json          # Dependencies
+│   └── tsconfig.json         # TypeScript config
 │
-├── WEBFLOW_INTEGRATION.md       # Main integration guide
-├── STRIPE_GUIDE.md             # Payment setup
-├── FIREBASE_GUIDE.md           # Firebase setup
-├── CLOUDFLARE_DEPLOYMENT.md    # Deployment guide
-├── PROJECT_SPEC.md             # Project specification
-├── firebase.json               # Firebase config
-└── README.md                   # This file
+├── 📚 Documentation
+│   ├── README.md             # This file (start here!)
+│   ├── WEBFLOW_INTEGRATION.md # Complete integration guide
+│   ├── STRIPE_GUIDE.md       # Payment setup
+│   ├── FIREBASE_GUIDE.md     # Firebase setup & security
+│   ├── CLOUDFLARE_DEPLOYMENT.md # Deployment guide
+│   └── PROJECT_SPEC.md       # Full project specification
+│
+├── ⚙️ Configuration
+│   ├── firebase.json         # Firebase config
+│   ├── firestore.rules       # Firestore security rules
+│   ├── firestore.indexes.json
+│   ├── wrangler.toml         # Cloudflare Pages config
+│   └── package.json          # Root dependencies
 ```
+
+**Clean & Organized:**
+- ✅ No duplicate code
+- ✅ Clear separation: Frontend (`public/`) vs Backend (`src/backend/`)
+- ✅ Single source of truth for each module
+- ✅ All test files consolidated in `public/test.html`
 
 ---
 
