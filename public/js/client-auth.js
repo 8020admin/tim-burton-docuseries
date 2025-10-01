@@ -164,7 +164,14 @@ class TimBurtonAuth {
    */
   async syncWithBackend(idToken, firebaseUser) {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/auth/google`, {
+      // Determine which provider was used
+      const isGoogleAuth = firebaseUser.providerData && 
+                          firebaseUser.providerData.some(p => p.providerId === 'google.com');
+      
+      // Use appropriate endpoint based on provider
+      const endpoint = isGoogleAuth ? '/auth/google' : '/auth/verify';
+      
+      const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken })
