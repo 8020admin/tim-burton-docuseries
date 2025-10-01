@@ -37,10 +37,7 @@ class ButtonStateManager {
       
       // Handle intended action after successful authentication
       if ((event.detail.type === 'signIn' || event.detail.type === 'signUp' || event.detail.type === 'sessionRestored') && this.intendedAction) {
-        // Add small delay to ensure auth state is fully propagated
-        setTimeout(() => {
-          this.executeIntendedAction();
-        }, 100);
+        this.executeIntendedActionWhenReady();
       }
     });
 
@@ -375,6 +372,45 @@ class ButtonStateManager {
       console.error('Box set purchase error:', error);
       this.showErrorMessage('Failed to start box set purchase. Please try again.');
     }
+  }
+
+  /**
+   * Wait for auth state to be ready, then execute intended action
+   */
+  async executeIntendedActionWhenReady() {
+    if (!this.intendedAction) return;
+    
+    // Wait for auth to be fully ready
+    const authReady = await this.waitForAuthReady();
+    
+    if (!authReady) {
+      console.error('Auth state not ready, cannot execute intended action');
+      this.intendedAction = null;
+      return;
+    }
+    
+    this.executeIntendedAction();
+  }
+  
+  /**
+   * Wait for auth state to be ready
+   */
+  async waitForAuthReady(maxAttempts = 10, delayMs = 50) {
+    for (let i = 0; i < maxAttempts; i++) {
+      // Check if auth is properly initialized and user is signed in
+      if (this.auth && 
+          this.auth.isSignedIn && 
+          this.auth.isSignedIn() && 
+          this.auth.getCurrentUser && 
+          this.auth.getCurrentUser()) {
+        return true;
+      }
+      
+      // Wait before next check
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    
+    return false;
   }
 
   /**
