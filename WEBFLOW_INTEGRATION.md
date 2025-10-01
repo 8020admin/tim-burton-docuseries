@@ -194,6 +194,7 @@ Create a form with these attributes:
 **Name Input:**
 - Custom Attribute: `data-field` = `name`
 - Type: `text`
+- Placeholder: "First Name"
 
 **Email Input:**
 - Custom Attribute: `data-field` = `email`
@@ -207,7 +208,7 @@ Create a form with these attributes:
 
 ```html
 <form data-form="signup">
-  <input type="text" data-field="name" placeholder="Full Name" required>
+  <input type="text" data-field="name" placeholder="First Name" required>
   <input type="email" data-field="email" placeholder="Email" required>
   <input type="password" data-field="password" placeholder="Password" required>
   <button type="submit">Sign Up</button>
@@ -459,7 +460,7 @@ Here's a complete authentication modal with all attributes:
       
       <!-- Email Form -->
       <form data-form="signup">
-        <input type="text" data-field="name" placeholder="Full Name" required>
+        <input type="text" data-field="name" placeholder="First Name" required>
         <input type="email" data-field="email" placeholder="Email" required>
         <input type="password" data-field="password" placeholder="Password" required>
         <button type="submit">Sign Up</button>
@@ -882,6 +883,55 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 
 ----
 
+## 👤 **7. User Profile System**
+
+### **Profile Data Structure**
+Users now have enhanced profile data:
+- `firstName` - First name (required)
+- `lastName` - Last name (optional, can be added later)
+- `photoURL` - Profile picture URL (randomly assigned for new users)
+- `displayName` - Full name (auto-generated from firstName + lastName)
+- `email` - Email address
+- `createdAt` - Account creation timestamp
+- `lastLoginAt` - Last login timestamp
+- `lastUpdatedAt` - Last profile update timestamp
+
+### **Profile Display Elements**
+**Webflow Settings:**
+- Profile Image: Custom Attribute `data-profile-image`
+- First Name: Custom Attribute `data-profile-first-name`
+- Last Name: Custom Attribute `data-profile-last-name`
+- Full Name: Custom Attribute `data-profile-full-name`
+- Email: Custom Attribute `data-profile-email`
+
+```html
+<!-- Profile Display Example -->
+<div class="user-profile">
+  <img data-profile-image src="" alt="Profile picture" />
+  <h3 data-profile-full-name></h3>
+  <p data-profile-email></p>
+  
+  <!-- Individual name fields -->
+  <span data-profile-first-name></span>
+  <span data-profile-last-name></span>
+</div>
+```
+
+### **Profile Management JavaScript**
+The system automatically:
+- Assigns random profile pictures to new users
+- Extracts firstName/lastName from Google Sign-In data
+- Updates profile displays when user signs in
+- Provides API for profile updates
+
+### **Default Profile Pictures**
+New users get randomly assigned one of these avatars:
+- Avatar 1-7 (various styles)
+- Google users get their Google profile picture if available
+- Fallback to random avatar if Google picture unavailable
+
+----
+
 ## 📚 **Quick Reference Table**
 
 | Element Type | Attribute | Value |
@@ -902,6 +952,12 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 | Email Field | `data-field` | `email` |
 | Password Field | `data-field` | `password` |
 | Name Field | `data-field` | `name` |
+| **Profile Display** |
+| Profile Image | `data-profile-image` | - |
+| First Name | `data-profile-first-name` | - |
+| Last Name | `data-profile-last-name` | - |
+| Full Name | `data-profile-full-name` | - |
+| Email | `data-profile-email` | - |
 | **Actions** |
 | Reset Password | `data-action` | `reset-password` |
 | Google Sign-In | `data-google-signin` | `[unique-id]` |

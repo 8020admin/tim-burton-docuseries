@@ -164,7 +164,7 @@ async function handleEmailSignUp(e) {
   e.preventDefault();
   
   const form = e.target;
-  const name = form.querySelector('[data-field="name"]')?.value;
+  const firstName = form.querySelector('[data-field="name"]')?.value;
   const email = form.querySelector('[data-field="email"]')?.value;
   const password = form.querySelector('[data-field="password"]')?.value;
   const submitBtn = form.querySelector('[type="submit"]');
@@ -179,7 +179,7 @@ async function handleEmailSignUp(e) {
   
   try {
     if (window.timBurtonAuth) {
-      const result = await window.timBurtonAuth.signUpWithEmail(email, password, name);
+      const result = await window.timBurtonAuth.signUpWithEmail(email, password, firstName);
       if (!result.success) {
         showAuthError(result.error);
       }

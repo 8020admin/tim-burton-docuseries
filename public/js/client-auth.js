@@ -219,7 +219,7 @@ class TimBurtonAuth {
   /**
    * Sign up with email/password
    */
-  async signUpWithEmail(email, password, name) {
+  async signUpWithEmail(email, password, firstName) {
     try {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
@@ -227,9 +227,9 @@ class TimBurtonAuth {
       
       const userCredential = await this.firebaseAuth.createUserWithEmailAndPassword(email, password);
       
-      // Update display name
-      if (name && userCredential.user) {
-        await userCredential.user.updateProfile({ displayName: name });
+      // Update display name (use firstName as displayName for now)
+      if (firstName && userCredential.user) {
+        await userCredential.user.updateProfile({ displayName: firstName });
       }
       
       // onAuthStateChanged will handle the rest
