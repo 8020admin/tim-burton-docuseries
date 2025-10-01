@@ -43,25 +43,35 @@ Our authentication system follows a **clean, unified architecture** designed for
 
 ---
 
-## 🏷️ **CSS Class Naming Convention**
+## 🏷️ **Naming Conventions**
 
+### **CSS Classes (Prefixed with `tb-`)**
 To prevent conflicts with Webflow's existing styles, **all critical CSS classes are prefixed with `tb-`** (Tim Burton):
 
-### **Prefixed Classes**
 - `.tb-active` - Active state for tabs and content
 - `.tb-spinner` - Loading spinner animation
 - `.tb-loading` - Loading state for buttons
 - `@keyframes tb-spin` - Spinner animation keyframes
 
-### **Why This Matters**
+**Why This Matters:**
 - ✅ **No conflicts** with Webflow's existing `.active`, `.loading`, or other generic classes
 - ✅ **Clear ownership** - you know which classes belong to this authentication system
 - ✅ **Safer integration** - your Webflow styles won't interfere with authentication functionality
 
-### **What You Need to Do**
-When implementing in Webflow, use the **prefixed class names** shown in this guide:
-- Use `class="tb-active"` instead of `class="active"`
-- The CSS provided in this guide already uses the correct prefixes
+### **Data Attributes (Hyphenated)**
+All data attributes use **hyphenated naming** for consistency and readability:
+
+**Button Types:**
+- ✅ `data-button-type="sign-in"` (recommended)
+- ✅ `data-button-type="sign-out"` (recommended)
+- ℹ️ Also supports: `"signin"` and `"signout"` (for backwards compatibility)
+
+**Content Visibility:**
+- ✅ `data-show-not-signed-in="true"` - Shows when user is NOT signed in
+- ✅ `data-show-not-paid="true"` - Shows when signed in but hasn't purchased
+- ✅ `data-upgrade-prompt="true"` - Shows upgrade prompt for regular purchasers
+
+**Important:** Always use the hyphenated versions shown in this guide for consistency!
 
 ---
 

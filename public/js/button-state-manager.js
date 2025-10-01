@@ -165,9 +165,11 @@ class ButtonStateManager {
     
     switch (buttonType) {
       case 'sign-in':
+      case 'signin':  // Support both hyphenated and non-hyphenated
         this.handleSignInClick();
         break;
       case 'sign-out':
+      case 'signout':  // Support both hyphenated and non-hyphenated
         this.handleSignOutClick();
         break;
       case 'rent':
