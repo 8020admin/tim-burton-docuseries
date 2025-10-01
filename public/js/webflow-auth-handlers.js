@@ -398,14 +398,13 @@ function initializeAuthHandlers() {
     });
   });
   
-  // Close modal buttons - handle both data-action="close-modal" and data-modal-action="close"
-  const closeModalButtons = document.querySelectorAll('[data-action="close-modal"], [data-modal-action="close"]');
-  closeModalButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
+  // Close modal buttons - use event delegation to handle both data-action="close-modal" and data-modal-action="close"
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('[data-action="close-modal"], [data-modal-action="close"]')) {
       e.preventDefault();
       
       // Find the closest modal and close it
-      const modal = button.closest('[data-modal]');
+      const modal = e.target.closest('[data-modal]');
       if (modal) {
         modal.style.display = 'none';
         
@@ -414,7 +413,7 @@ function initializeAuthHandlers() {
           showAuthModal('signin');
         }
       }
-    });
+    }
   });
   
   // Initialize Google Sign-In buttons - data-google-signin
