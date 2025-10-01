@@ -238,75 +238,73 @@ class ButtonStateManager {
   }
 
   /**
-   * Open authentication modal
+   * Open authentication modal (Attribute-based)
    */
   openAuthModal(tab = 'signin') {
-    const modal = document.getElementById('auth-modal');
-    if (modal) {
-      modal.style.display = 'flex';
-      
-      // Switch to specified tab
-      if (tab === 'signup') {
-        this.switchToSignUpTab();
-      } else {
-        this.switchToSignInTab();
+    // Use the webflow handler if available
+    if (window.webflowAuthHandlers) {
+      window.webflowAuthHandlers.showAuthModal(tab);
+    } else {
+      // Fallback to direct attribute selector
+      const modal = document.querySelector('[data-modal="auth"]');
+      if (modal) {
+        modal.style.display = 'flex';
+        this.switchAuthTab(tab);
       }
     }
   }
 
   /**
-   * Switch to Sign In tab
+   * Switch auth tab (Attribute-based)
    */
-  switchToSignInTab() {
-    const signInTab = document.getElementById('signin-tab');
-    const signUpTab = document.getElementById('signup-tab');
-    const signInTabButton = document.querySelector('[data-tab="signin"]');
-    const signUpTabButton = document.querySelector('[data-tab="signup"]');
+  switchAuthTab(tabName) {
+    // Get all tab buttons and contents using attributes
+    const tabs = document.querySelectorAll('[data-auth-tab]');
+    const tabContents = document.querySelectorAll('[data-auth-tab-content]');
     
-    if (signInTab && signUpTab && signInTabButton && signUpTabButton) {
-      signInTab.classList.add('active');
-      signUpTab.classList.remove('active');
-      signInTabButton.classList.add('active');
-      signUpTabButton.classList.remove('active');
-    }
+    // Remove active class from all
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(tc => tc.classList.remove('active'));
+    
+    // Add active class to target tab and content
+    const targetTab = document.querySelector(`[data-auth-tab="${tabName}"]`);
+    const targetContent = document.querySelector(`[data-auth-tab-content="${tabName}"]`);
+    
+    if (targetTab) targetTab.classList.add('active');
+    if (targetContent) targetContent.classList.add('active');
   }
 
   /**
-   * Switch to Sign Up tab
-   */
-  switchToSignUpTab() {
-    const signInTab = document.getElementById('signin-tab');
-    const signUpTab = document.getElementById('signup-tab');
-    const signInTabButton = document.querySelector('[data-tab="signin"]');
-    const signUpTabButton = document.querySelector('[data-tab="signup"]');
-    
-    if (signInTab && signUpTab && signInTabButton && signUpTabButton) {
-      signInTab.classList.remove('active');
-      signUpTab.classList.add('active');
-      signInTabButton.classList.remove('active');
-      signUpTabButton.classList.add('active');
-    }
-  }
-
-  /**
-   * Show purchase options modal
+   * Show purchase options modal (Attribute-based)
    */
   showPurchaseOptions() {
-    const modal = document.getElementById('purchase-options-modal');
-    if (modal) {
-      modal.style.display = 'flex';
+    // Use the webflow handler if available
+    if (window.webflowAuthHandlers) {
+      window.webflowAuthHandlers.showPurchaseModal();
     } else {
-      console.error('Purchase options modal not found');
+      // Fallback to direct attribute selector
+      const modal = document.querySelector('[data-modal="purchase"]');
+      if (modal) {
+        modal.style.display = 'flex';
+      } else {
+        console.error('Purchase options modal not found');
+      }
     }
   }
 
   /**
-   * Hide purchase options modal
+   * Hide purchase options modal (Attribute-based)
    */
   hidePurchaseOptions() {
-    const modal = document.getElementById('purchase-options-modal');
-    if (modal) {
-      modal.style.display = 'none';
+    // Use the webflow handler if available
+    if (window.webflowAuthHandlers) {
+      window.webflowAuthHandlers.hidePurchaseModal();
+    } else {
+      // Fallback to direct attribute selector
+      const modal = document.querySelector('[data-modal="purchase"]');
+      if (modal) {
+        modal.style.display = 'none';
+      }
     }
   }
 
@@ -459,20 +457,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Add click event listeners for purchase options modal
+  // Add click event listeners for purchase options modal (Attribute-based)
   document.addEventListener('click', (event) => {
-    if (event.target.matches('#purchase-options-modal .close-btn')) {
+    // Close button - data-modal-action="close" within data-modal="purchase"
+    if (event.target.matches('[data-modal="purchase"] [data-modal-action="close"]')) {
       window.buttonStateManager.hidePurchaseOptions();
-    } else if (event.target.matches('#regular-purchase-btn')) {
+    }
+    // Regular purchase button - data-purchase-type="regular"
+    else if (event.target.matches('[data-purchase-type="regular"]')) {
       window.buttonStateManager.handleRegularPurchaseClick();
-    } else if (event.target.matches('#box-set-purchase-btn')) {
+    }
+    // Box set purchase button - data-purchase-type="boxset"
+    else if (event.target.matches('[data-purchase-type="boxset"]')) {
       window.buttonStateManager.handleBoxSetPurchaseClick();
     }
   });
 
-  // Close modal when clicking outside
+  // Close modal when clicking outside (Attribute-based)
   document.addEventListener('click', (event) => {
-    const modal = document.getElementById('purchase-options-modal');
+    const modal = document.querySelector('[data-modal="purchase"]');
     if (event.target === modal) {
       window.buttonStateManager.hidePurchaseOptions();
     }

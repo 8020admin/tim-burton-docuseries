@@ -1,10 +1,14 @@
 /**
  * Webflow Authentication Event Handlers
- * This file contains all the JavaScript needed for Webflow integration
- * Add this as an external script to your Webflow project
+ * ATTRIBUTE-BASED INTERACTIONS - No IDs or classes required
+ * 
+ * All interactions use data attributes for maximum flexibility with Webflow
  */
 
-// Authentication Event Handlers
+// ============================================================================
+// AUTHENTICATION EVENT HANDLERS
+// ============================================================================
+
 document.addEventListener('timBurtonAuth', (event) => {
   const { type, data, user, isSignedIn } = event.detail;
   
@@ -14,20 +18,15 @@ document.addEventListener('timBurtonAuth', (event) => {
     case 'signIn':
     case 'signUp':
     case 'sessionRestored':
-      // User is signed in
-      showUserInfo(user);
       hideAuthModal();
       break;
       
     case 'signOut':
-      // User signed out
-      showSignInButton();
-      hideUserInfo();
+      // Handled by button-state-manager
       break;
       
     case 'signInError':
     case 'signUpError':
-      // Handle errors
       showAuthError(data.error);
       break;
       
@@ -37,191 +36,214 @@ document.addEventListener('timBurtonAuth', (event) => {
   }
 });
 
-// Show user info when signed in
-function showUserInfo(user) {
-  const userInfo = document.getElementById('user-info');
-  const signInBtn = document.getElementById('sign-in-btn');
-  const userAvatar = document.getElementById('user-avatar');
-  const userName = document.getElementById('user-name');
+// ============================================================================
+// MODAL MANAGEMENT (Attribute-based)
+// ============================================================================
+
+/**
+ * Show auth modal
+ * Targets any element with data-modal="auth"
+ */
+function showAuthModal(tab = 'signin') {
+  const authModal = document.querySelector('[data-modal="auth"]');
+  if (!authModal) return;
   
-  if (userInfo) userInfo.style.display = 'block';
-  if (signInBtn) signInBtn.style.display = 'none';
-  if (userAvatar) userAvatar.src = user.picture || '/default-avatar.png';
-  if (userName) userName.textContent = user.name || user.email;
-}
-
-// Show sign in button when not signed in
-function showSignInButton() {
-  const userInfo = document.getElementById('user-info');
-  const signInBtn = document.getElementById('sign-in-btn');
+  authModal.style.display = 'flex';
   
-  if (userInfo) userInfo.style.display = 'none';
-  if (signInBtn) signInBtn.style.display = 'block';
+  // Switch to specified tab
+  switchAuthTab(tab);
 }
 
-// Hide user info
-function hideUserInfo() {
-  const userInfo = document.getElementById('user-info');
-  if (userInfo) userInfo.style.display = 'none';
-}
-
-// Show auth modal
-function showAuthModal() {
-  const authModal = document.getElementById('auth-modal');
-  if (authModal) authModal.style.display = 'flex';
-}
-
-// Hide auth modal
+/**
+ * Hide auth modal
+ */
 function hideAuthModal() {
-  const authModal = document.getElementById('auth-modal');
-  if (authModal) authModal.style.display = 'none';
+  const authModal = document.querySelector('[data-modal="auth"]');
+  if (authModal) {
+    authModal.style.display = 'none';
+  }
 }
 
-// Show auth error
-function showAuthError(message) {
-  // You can customize this to show errors in your UI
-  // For now, using alert - you can replace with a custom notification system
-  alert('Authentication Error: ' + message);
+/**
+ * Show purchase options modal
+ */
+function showPurchaseModal() {
+  const modal = document.querySelector('[data-modal="purchase"]');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
 }
 
-// Show auth success
-function showAuthSuccess(message) {
-  // You can customize this to show success messages in your UI
-  // For now, using alert - you can replace with a custom notification system
-  alert(message);
+/**
+ * Hide purchase options modal
+ */
+function hidePurchaseModal() {
+  const modal = document.querySelector('[data-modal="purchase"]');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
-// Initialize all event listeners
-function initializeAuthHandlers() {
-  // Tab switching functionality
-  const tabs = document.querySelectorAll('.auth-tab');
-  const tabContents = document.querySelectorAll('.auth-tab-content');
+// ============================================================================
+// TAB MANAGEMENT (Attribute-based)
+// ============================================================================
+
+/**
+ * Switch auth modal tabs
+ * @param {string} tabName - 'signin' or 'signup'
+ */
+function switchAuthTab(tabName) {
+  // Get all tab buttons and contents
+  const tabs = document.querySelectorAll('[data-auth-tab]');
+  const tabContents = document.querySelectorAll('[data-auth-tab-content]');
   
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const targetTab = tab.getAttribute('data-tab');
-      
-      // Remove active class from all tabs and contents
-      tabs.forEach(t => t.classList.remove('active'));
-      tabContents.forEach(tc => tc.classList.remove('active'));
-      
-      // Add active class to clicked tab and corresponding content
-      tab.classList.add('active');
-      const targetContent = document.getElementById(targetTab + '-tab');
-      if (targetContent) targetContent.classList.add('active');
-    });
-  });
+  // Remove active class from all
+  tabs.forEach(t => t.classList.remove('active'));
+  tabContents.forEach(tc => tc.classList.remove('active'));
   
-  // Sign in button click
-  const signInBtn = document.getElementById('sign-in-btn');
-  if (signInBtn) {
-    signInBtn.addEventListener('click', showAuthModal);
+  // Add active class to target tab and content
+  const targetTab = document.querySelector(`[data-auth-tab="${tabName}"]`);
+  const targetContent = document.querySelector(`[data-auth-tab-content="${tabName}"]`);
+  
+  if (targetTab) targetTab.classList.add('active');
+  if (targetContent) targetContent.classList.add('active');
+}
+
+// ============================================================================
+// FORM HANDLERS (Attribute-based)
+// ============================================================================
+
+/**
+ * Handle email sign-in form submission
+ */
+async function handleEmailSignIn(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const email = form.querySelector('[data-field="email"]')?.value;
+  const password = form.querySelector('[data-field="password"]')?.value;
+  const submitBtn = form.querySelector('[type="submit"]');
+  
+  if (!email || !password) {
+    showAuthError('Please enter email and password');
+    return;
   }
   
-  // Close modal
-  const authClose = document.getElementById('auth-close');
-  if (authClose) {
-    authClose.addEventListener('click', hideAuthModal);
-  }
+  // Show loading state
+  setButtonLoading(submitBtn, true);
   
-  // Sign out button
-  const signOutBtn = document.getElementById('sign-out-btn');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', () => {
-      if (window.timBurtonAuth) {
-        window.timBurtonAuth.signOut();
-      }
-    });
-  }
-  
-  // Email sign-in form
-  const emailSignInForm = document.getElementById('email-signin-form');
-  if (emailSignInForm) {
-    emailSignInForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const email = document.getElementById('signin-email').value;
-      const password = document.getElementById('signin-password').value;
-      const submitBtn = emailSignInForm.querySelector('button[type="submit"]');
-      
-      // Show loading state
-      setButtonLoading(submitBtn, true);
-      
-      try {
-        if (window.timBurtonAuth) {
-          const result = await window.timBurtonAuth.signInWithEmail(email, password);
-          if (!result.success) {
-            showAuthError(result.error);
-          }
-        }
-      } finally {
-        // Hide loading state
-        setButtonLoading(submitBtn, false);
-      }
-    });
-  }
-  
-  // Email sign-up form
-  const emailSignUpForm = document.getElementById('email-signup-form');
-  if (emailSignUpForm) {
-    emailSignUpForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      const submitBtn = emailSignUpForm.querySelector('button[type="submit"]');
-      
-      // Show loading state
-      setButtonLoading(submitBtn, true);
-      
-      try {
-        if (window.timBurtonAuth) {
-          const result = await window.timBurtonAuth.signUpWithEmail(email, password, name);
-          if (!result.success) {
-            showAuthError(result.error);
-          }
-        }
-      } finally {
-        // Hide loading state
-        setButtonLoading(submitBtn, false);
-      }
-    });
-  }
-  
-  // Forgot password
-  const forgotPassword = document.getElementById('forgot-password');
-  if (forgotPassword) {
-    forgotPassword.addEventListener('click', async (e) => {
-      e.preventDefault();
-      
-      const email = prompt('Enter your email address:');
-      if (email && window.timBurtonAuth) {
-        const result = await window.timBurtonAuth.resetPassword(email);
-        if (!result.success) {
-          showAuthError(result.error);
-        }
-      }
-    });
-  }
-  
-  // Initialize Google Sign-In buttons
-  setTimeout(() => {
+  try {
     if (window.timBurtonAuth) {
-      const googleSignInBtn = document.getElementById('google-signin-button');
-      const googleSignUpBtn = document.getElementById('google-signup-button');
-      
-      if (googleSignInBtn) {
-        window.timBurtonAuth.renderGoogleSignInButton('google-signin-button');
-      }
-      if (googleSignUpBtn) {
-        window.timBurtonAuth.renderGoogleSignInButton('google-signup-button');
+      const result = await window.timBurtonAuth.signInWithEmail(email, password);
+      if (!result.success) {
+        showAuthError(result.error);
       }
     }
-  }, 1000);
+  } finally {
+    setButtonLoading(submitBtn, false);
+  }
 }
 
-// Set button loading state
+/**
+ * Handle email sign-up form submission
+ */
+async function handleEmailSignUp(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const name = form.querySelector('[data-field="name"]')?.value;
+  const email = form.querySelector('[data-field="email"]')?.value;
+  const password = form.querySelector('[data-field="password"]')?.value;
+  const submitBtn = form.querySelector('[type="submit"]');
+  
+  if (!email || !password) {
+    showAuthError('Please enter email and password');
+    return;
+  }
+  
+  // Show loading state
+  setButtonLoading(submitBtn, true);
+  
+  try {
+    if (window.timBurtonAuth) {
+      const result = await window.timBurtonAuth.signUpWithEmail(email, password, name);
+      if (!result.success) {
+        showAuthError(result.error);
+      }
+    }
+  } finally {
+    setButtonLoading(submitBtn, false);
+  }
+}
+
+/**
+ * Handle password reset
+ */
+async function handlePasswordReset(e) {
+  e.preventDefault();
+  
+  const email = prompt('Enter your email address:');
+  if (!email) return;
+  
+  if (window.timBurtonAuth) {
+    const result = await window.timBurtonAuth.resetPassword(email);
+    if (result.success) {
+      showAuthSuccess('Password reset email sent!');
+    } else {
+      showAuthError(result.error);
+    }
+  }
+}
+
+// ============================================================================
+// UI FEEDBACK
+// ============================================================================
+
+/**
+ * Show auth error message
+ */
+function showAuthError(message) {
+  // Check for custom error container
+  const errorContainer = document.querySelector('[data-auth-error]');
+  
+  if (errorContainer) {
+    errorContainer.textContent = message;
+    errorContainer.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      errorContainer.style.display = 'none';
+    }, 5000);
+  } else {
+    // Fallback to alert
+    alert('Authentication Error: ' + message);
+  }
+}
+
+/**
+ * Show auth success message
+ */
+function showAuthSuccess(message) {
+  // Check for custom success container
+  const successContainer = document.querySelector('[data-auth-success]');
+  
+  if (successContainer) {
+    successContainer.textContent = message;
+    successContainer.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      successContainer.style.display = 'none';
+    }, 5000);
+  } else {
+    // Fallback to alert
+    alert(message);
+  }
+}
+
+/**
+ * Set button loading state
+ */
 function setButtonLoading(button, isLoading) {
   if (!button) return;
   
@@ -232,17 +254,82 @@ function setButtonLoading(button, isLoading) {
     button.classList.add('loading');
   } else {
     button.disabled = false;
-    button.textContent = button.dataset.originalText || 'Sign In';
+    button.textContent = button.dataset.originalText || 'Submit';
     button.classList.remove('loading');
   }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeAuthHandlers);
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
-// Also initialize if DOM is already loaded
+function initializeAuthHandlers() {
+  // Tab switching - Listen for clicks on elements with data-auth-tab
+  const tabs = document.querySelectorAll('[data-auth-tab]');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.getAttribute('data-auth-tab');
+      switchAuthTab(tabName);
+    });
+  });
+  
+  // Modal close buttons - data-modal-action="close"
+  const closeButtons = document.querySelectorAll('[data-modal-action="close"]');
+  closeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const modalType = btn.closest('[data-modal]')?.getAttribute('data-modal');
+      if (modalType === 'auth') {
+        hideAuthModal();
+      } else if (modalType === 'purchase') {
+        hidePurchaseModal();
+      }
+    });
+  });
+  
+  // Email sign-in form - data-form="signin"
+  const signInForm = document.querySelector('[data-form="signin"]');
+  if (signInForm) {
+    signInForm.addEventListener('submit', handleEmailSignIn);
+  }
+  
+  // Email sign-up form - data-form="signup"
+  const signUpForm = document.querySelector('[data-form="signup"]');
+  if (signUpForm) {
+    signUpForm.addEventListener('submit', handleEmailSignUp);
+  }
+  
+  // Forgot password link - data-action="reset-password"
+  const forgotPasswordLinks = document.querySelectorAll('[data-action="reset-password"]');
+  forgotPasswordLinks.forEach(link => {
+    link.addEventListener('click', handlePasswordReset);
+  });
+  
+  // Initialize Google Sign-In buttons - data-google-signin
+  setTimeout(() => {
+    if (window.timBurtonAuth) {
+      const googleButtons = document.querySelectorAll('[data-google-signin]');
+      googleButtons.forEach(btn => {
+        const containerId = btn.getAttribute('data-google-signin');
+        if (containerId) {
+          window.timBurtonAuth.renderGoogleSignInButton(containerId);
+        }
+      });
+    }
+  }, 1000);
+}
+
+// Initialize when DOM is loaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeAuthHandlers);
 } else {
   initializeAuthHandlers();
 }
+
+// Export functions for use by other modules
+window.webflowAuthHandlers = {
+  showAuthModal,
+  hideAuthModal,
+  showPurchaseModal,
+  hidePurchaseModal,
+  switchAuthTab
+};
