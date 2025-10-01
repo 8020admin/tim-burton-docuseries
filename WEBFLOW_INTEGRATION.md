@@ -663,6 +663,26 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   display: flex !important;
 }
 
+/* Password Recovery Modal */
+[data-modal="password-recovery"] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+}
+
+/* Show modal when opened by JS */
+[data-modal="password-recovery"][style*="display: flex"],
+[data-modal="password-recovery"][style*="display:flex"] {
+  display: flex !important;
+}
+
 .modal-content {
   background: white;
   padding: 30px;
@@ -673,6 +693,53 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   overflow-y: auto;
   position: relative;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Form Styling */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Modal Footer */
+.modal-footer {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.modal-footer button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.modal-footer button:hover {
+  color: #0056b3;
 }
 
 .purchase-options {
@@ -755,6 +822,66 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 
 ---
 
+## 🔐 **6. Password Recovery Modal**
+
+### **Modal Container**
+**Webflow Settings:**
+- Custom Attribute: `data-modal` = `password-recovery`
+- Set initial style: `display: none`
+
+```html
+<div data-modal="password-recovery" style="display: none;">
+  <div class="modal-content">
+    <h2>Reset Password</h2>
+    <button data-action="close-modal">×</button>
+    
+    <form data-form="password-recovery">
+      <div class="form-group">
+        <label for="recovery-email">Email Address</label>
+        <input 
+          type="email" 
+          id="recovery-email" 
+          data-field="email" 
+          placeholder="Enter your email address"
+          required
+        />
+      </div>
+      
+      <button type="submit" data-button="submit">
+        <span class="tb-spinner" style="display: none;"></span>
+        Send Reset Email
+      </button>
+      
+      <div data-auth-error style="display: none;"></div>
+      <div data-auth-success style="display: none;"></div>
+    </form>
+    
+    <div class="modal-footer">
+      <button data-action="back-to-signin">Back to Sign In</button>
+    </div>
+  </div>
+</div>
+```
+
+### **Form Elements**
+**Webflow Settings:**
+- Form: Custom Attribute `data-form` = `password-recovery`
+- Email Input: Custom Attribute `data-field` = `email`
+- Submit Button: Custom Attribute `data-button` = `submit`
+- Error Container: Custom Attribute `data-auth-error`
+- Success Container: Custom Attribute `data-auth-success`
+- Back Button: Custom Attribute `data-action` = `back-to-signin`
+
+### **Trigger Link**
+**Webflow Settings:**
+- Custom Attribute: `data-action` = `reset-password`
+
+```html
+<a href="#" data-action="reset-password">Forgot Password?</a>
+```
+
+----
+
 ## 📚 **Quick Reference Table**
 
 | Element Type | Attribute | Value |
@@ -762,6 +889,7 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 | **Modals** |
 | Auth Modal | `data-modal` | `auth` |
 | Purchase Modal | `data-modal` | `purchase` |
+| Password Recovery Modal | `data-modal` | `password-recovery` |
 | Close Button | `data-modal-action` | `close` |
 | **Authentication** |
 | Sign In Tab | `data-auth-tab` | `signin` |

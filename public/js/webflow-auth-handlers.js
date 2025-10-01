@@ -190,21 +190,75 @@ async function handleEmailSignUp(e) {
 }
 
 /**
- * Handle password reset
+ * Handle password reset - show modal instead of prompt
  */
-async function handlePasswordReset(e) {
+function handlePasswordReset(e) {
   e.preventDefault();
   
-  const email = prompt('Enter your email address:');
-  if (!email) return;
-  
-  if (window.timBurtonAuth) {
-    const result = await window.timBurtonAuth.resetPassword(email);
-    if (result.success) {
-      showAuthSuccess('Password reset email sent!');
-    } else {
-      showAuthError(result.error);
+  // Show password recovery modal
+  const modal = document.querySelector('[data-modal="password-recovery"]');
+  if (modal) {
+    modal.style.display = 'flex';
+    
+    // Clear any previous messages
+    const errorContainer = modal.querySelector('[data-auth-error]');
+    const successContainer = modal.querySelector('[data-auth-success]');
+    if (errorContainer) errorContainer.style.display = 'none';
+    if (successContainer) successContainer.style.display = 'none';
+    
+    // Focus on email input
+    const emailInput = modal.querySelector('[data-field="email"]');
+    if (emailInput) {
+      setTimeout(() => emailInput.focus(), 100);
     }
+  }
+}
+
+/**
+ * Handle password recovery form submission
+ */
+async function handlePasswordRecoverySubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const emailInput = form.querySelector('[data-field="email"]');
+  const submitBtn = form.querySelector('[data-button="submit"]');
+  const errorContainer = form.querySelector('[data-auth-error]');
+  const successContainer = form.querySelector('[data-auth-success]');
+  
+  if (!emailInput || !emailInput.value.trim()) {
+    showAuthError('Please enter your email address.', errorContainer);
+    return;
+  }
+  
+  const email = emailInput.value.trim();
+  
+  // Show loading state
+  setButtonLoading(submitBtn, true);
+  
+  // Clear previous messages
+  if (errorContainer) errorContainer.style.display = 'none';
+  if (successContainer) successContainer.style.display = 'none';
+  
+  try {
+    if (window.timBurtonAuth) {
+      const result = await window.timBurtonAuth.resetPassword(email);
+      
+      if (result.success) {
+        showAuthSuccess('Password reset email sent! Check your inbox.', successContainer);
+        // Clear the form
+        emailInput.value = '';
+      } else {
+        showAuthError(result.error, errorContainer);
+      }
+    } else {
+      showAuthError('Authentication system not available. Please try again.', errorContainer);
+    }
+  } catch (error) {
+    console.error('Password reset error:', error);
+    showAuthError('An error occurred. Please try again.', errorContainer);
+  } finally {
+    setButtonLoading(submitBtn, false);
   }
 }
 
@@ -215,9 +269,9 @@ async function handlePasswordReset(e) {
 /**
  * Show auth error message
  */
-function showAuthError(message) {
-  // Check for custom error container
-  const errorContainer = document.querySelector('[data-auth-error]');
+function showAuthError(message, container = null) {
+  // Use provided container or find default one
+  const errorContainer = container || document.querySelector('[data-auth-error]');
   
   if (errorContainer) {
     errorContainer.textContent = message;
@@ -236,9 +290,9 @@ function showAuthError(message) {
 /**
  * Show auth success message
  */
-function showAuthSuccess(message) {
-  // Check for custom success container
-  const successContainer = document.querySelector('[data-auth-success]');
+function showAuthSuccess(message, container = null) {
+  // Use provided container or find default one
+  const successContainer = container || document.querySelector('[data-auth-success]');
   
   if (successContainer) {
     successContainer.textContent = message;
@@ -317,6 +371,27 @@ function initializeAuthHandlers() {
     link.addEventListener('click', handlePasswordReset);
   });
   
+  // Password recovery form - data-form="password-recovery"
+  const passwordRecoveryForm = document.querySelector('[data-form="password-recovery"]');
+  if (passwordRecoveryForm) {
+    passwordRecoveryForm.addEventListener('submit', handlePasswordRecoverySubmit);
+  }
+  
+  // Back to sign-in button - data-action="back-to-signin"
+  const backToSignInButtons = document.querySelectorAll('[data-action="back-to-signin"]');
+  backToSignInButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Hide password recovery modal
+      const passwordModal = document.querySelector('[data-modal="password-recovery"]');
+      if (passwordModal) {
+        passwordModal.style.display = 'none';
+      }
+      // Show auth modal on sign-in tab
+      showAuthModal('signin');
+    });
+  });
+  
   // Initialize Google Sign-In buttons - data-google-signin
   setTimeout(() => {
     if (window.timBurtonAuth) {
@@ -344,5 +419,22 @@ window.webflowAuthHandlers = {
   hideAuthModal,
   showPurchaseModal,
   hidePurchaseModal,
-  switchAuthTab
+  switchAuthTab,
+  showPasswordRecoveryModal: () => {
+    const modal = document.querySelector('[data-modal="password-recovery"]');
+    if (modal) {
+      modal.style.display = 'flex';
+      // Focus on email input
+      const emailInput = modal.querySelector('[data-field="email"]');
+      if (emailInput) {
+        setTimeout(() => emailInput.focus(), 100);
+      }
+    }
+  },
+  hidePasswordRecoveryModal: () => {
+    const modal = document.querySelector('[data-modal="password-recovery"]');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
 };
