@@ -98,15 +98,15 @@ function switchAuthTab(tabName) {
   const tabContents = document.querySelectorAll('[data-auth-tab-content]');
   
   // Remove active class from all
-  tabs.forEach(t => t.classList.remove('active'));
-  tabContents.forEach(tc => tc.classList.remove('active'));
+  tabs.forEach(t => t.classList.remove('tb-active'));
+  tabContents.forEach(tc => tc.classList.remove('tb-active'));
   
   // Add active class to target tab and content
   const targetTab = document.querySelector(`[data-auth-tab="${tabName}"]`);
   const targetContent = document.querySelector(`[data-auth-tab-content="${tabName}"]`);
   
-  if (targetTab) targetTab.classList.add('active');
-  if (targetContent) targetContent.classList.add('active');
+  if (targetTab) targetTab.classList.add('tb-active');
+  if (targetContent) targetContent.classList.add('tb-active');
 }
 
 // ============================================================================
@@ -250,12 +250,12 @@ function setButtonLoading(button, isLoading) {
   if (isLoading) {
     button.disabled = true;
     button.dataset.originalText = button.textContent;
-    button.innerHTML = '<span class="spinner"></span> Loading...';
-    button.classList.add('loading');
+    button.innerHTML = '<span class="tb-spinner"></span> Loading...';
+    button.classList.add('tb-loading');
   } else {
     button.disabled = false;
     button.textContent = button.dataset.originalText || 'Submit';
-    button.classList.remove('loading');
+    button.classList.remove('tb-loading');
   }
 }
 

@@ -29,6 +29,7 @@ Our authentication system follows a **clean, unified architecture** designed for
 - ✅ **Single source of truth** - Firebase `onAuthStateChanged` listener
 - ✅ **Unified localStorage** - One key (`timBurtonSession`) with consistent schema
 - ✅ **Attribute-based interactions** - No IDs or classes for JavaScript
+- ✅ **Namespaced CSS classes** - All critical classes prefixed with `tb-` to prevent conflicts
 - ✅ **Proper error handling** - Clear error messages and loading states
 - ✅ **No patchwork** - Clean separation of concerns
 
@@ -39,6 +40,28 @@ Our authentication system follows a **clean, unified architecture** designed for
 - 📱 Industry standard (Firebase best practices)
 - 🔄 Session persistence works correctly
 - 🎯 No ID conflicts with Webflow
+
+---
+
+## 🏷️ **CSS Class Naming Convention**
+
+To prevent conflicts with Webflow's existing styles, **all critical CSS classes are prefixed with `tb-`** (Tim Burton):
+
+### **Prefixed Classes**
+- `.tb-active` - Active state for tabs and content
+- `.tb-spinner` - Loading spinner animation
+- `.tb-loading` - Loading state for buttons
+- `@keyframes tb-spin` - Spinner animation keyframes
+
+### **Why This Matters**
+- ✅ **No conflicts** with Webflow's existing `.active`, `.loading`, or other generic classes
+- ✅ **Clear ownership** - you know which classes belong to this authentication system
+- ✅ **Safer integration** - your Webflow styles won't interfere with authentication functionality
+
+### **What You Need to Do**
+When implementing in Webflow, use the **prefixed class names** shown in this guide:
+- Use `class="tb-active"` instead of `class="active"`
+- The CSS provided in this guide already uses the correct prefixes
 
 ---
 
@@ -94,13 +117,13 @@ For switching between Sign In and Sign Up:
 
 **Sign In Tab:**
 - Custom Attribute: `data-auth-tab` = `signin`
-- Add class `active` for default state
+- Add class `tb-active` for default state
 
 **Sign Up Tab:**
 - Custom Attribute: `data-auth-tab` = `signup`
 
 ```html
-<button data-auth-tab="signin" class="active">Sign In</button>
+<button data-auth-tab="signin" class="tb-active">Sign In</button>
 <button data-auth-tab="signup">Sign Up</button>
 ```
 
@@ -109,13 +132,13 @@ Containers for each tab's content:
 
 **Sign In Content:**
 - Custom Attribute: `data-auth-tab-content` = `signin`
-- Add class `active` for default state
+- Add class `tb-active` for default state
 
 **Sign Up Content:**
 - Custom Attribute: `data-auth-tab-content` = `signup`
 
 ```html
-<div data-auth-tab-content="signin" class="active">
+<div data-auth-tab-content="signin" class="tb-active">
   <!-- Sign in form -->
 </div>
 
@@ -393,12 +416,12 @@ Here's a complete authentication modal with all attributes:
     
     <!-- Tabs -->
     <div class="tabs">
-      <button data-auth-tab="signin" class="active">Sign In</button>
+      <button data-auth-tab="signin" class="tb-active">Sign In</button>
       <button data-auth-tab="signup">Sign Up</button>
     </div>
     
     <!-- Sign In Tab -->
-    <div data-auth-tab-content="signin" class="active">
+    <div data-auth-tab-content="signin" class="tb-active">
       <!-- Google Sign-In -->
       <div data-google-signin="google-signin-btn"></div>
       
@@ -496,7 +519,7 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   border-bottom: 2px solid transparent;
 }
 
-[data-auth-tab].active {
+[data-auth-tab].tb-active {
   border-bottom-color: #007bff;
 }
 
@@ -504,7 +527,7 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   display: none;
 }
 
-[data-auth-tab-content].active {
+[data-auth-tab-content].tb-active {
   display: block;
 }
 
@@ -568,22 +591,22 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 }
 
 /* Loading Spinner */
-.spinner {
+.tb-spinner {
   display: inline-block;
   width: 16px;
   height: 16px;
   border: 2px solid #ffffff;
   border-radius: 50%;
   border-top-color: transparent;
-  animation: spin 1s ease-in-out infinite;
+  animation: tb-spin 1s ease-in-out infinite;
   margin-right: 8px;
 }
 
-@keyframes spin {
+@keyframes tb-spin {
   to { transform: rotate(360deg); }
 }
 
-.loading {
+.tb-loading {
   opacity: 0.7;
   cursor: not-allowed;
 }
