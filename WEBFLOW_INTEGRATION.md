@@ -4,6 +4,40 @@
 
 This guide shows you how to integrate the authentication system into your Webflow project. The system supports both Google Sign-In and Email/Password authentication.
 
+## 🏗️ **Clean Architecture**
+
+Our authentication system follows a **clean, unified architecture** designed for maintainability and security:
+
+### **Authentication Flow**
+```
+1. User Action (Sign In/Sign Up)
+   ↓
+2. Firebase Auth SDK (client-side)
+   ↓
+3. Get ID Token
+   ↓
+4. Sync with Backend (/auth/session endpoint)
+   ↓
+5. Fetch Purchase Status
+   ↓
+6. Update UI
+```
+
+### **Key Principles**
+- ✅ **All authentication happens client-side** via Firebase Auth SDK
+- ✅ **One backend endpoint** (`/auth/session`) for token verification
+- ✅ **Single source of truth** - Firebase `onAuthStateChanged` listener
+- ✅ **Unified localStorage** - One key (`timBurtonSession`) with consistent schema
+- ✅ **Proper error handling** - Clear error messages and loading states
+- ✅ **No patchwork** - Clean separation of concerns
+
+### **What This Means**
+- 🔒 More secure (Firebase handles password verification)
+- 🚀 Faster (no unnecessary backend calls)
+- 🛠️ Easier to maintain (one clear flow)
+- 📱 Industry standard (Firebase best practices)
+- 🔄 Session persistence works correctly
+
 ## 📋 **What You Need to Add to Webflow**
 
 ### **1. Scripts to Add in Project Settings**
