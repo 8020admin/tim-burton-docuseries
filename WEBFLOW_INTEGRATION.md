@@ -612,6 +612,16 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   margin-top: 10px;
 }
 
+/* Google Sign-In Button Container */
+[data-google-signin] {
+  min-height: 44px;
+  width: 100%;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Loading Spinner */
 .tb-spinner {
   display: inline-block;
