@@ -602,19 +602,27 @@ class TimBurtonAuth {
   
   /**
    * Render Google Sign-In button
+   * @param {string|HTMLElement} elementOrId - Element ID or DOM element
    */
-  renderGoogleSignInButton(elementId) {
+  renderGoogleSignInButton(elementOrId) {
     if (window.google) {
-      google.accounts.id.renderButton(
-        document.getElementById(elementId),
-        {
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left'
-        }
-      );
+      const element = typeof elementOrId === 'string' 
+        ? document.getElementById(elementOrId) || document.querySelector(`[data-google-signin="${elementOrId}"]`)
+        : elementOrId;
+      
+      if (element) {
+        google.accounts.id.renderButton(
+          element,
+          {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            width: 400
+          }
+        );
+      }
     }
   }
 }

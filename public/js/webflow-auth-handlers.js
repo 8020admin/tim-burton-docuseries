@@ -52,6 +52,19 @@ function showAuthModal(tab = 'signin') {
   
   // Switch to specified tab
   switchAuthTab(tab);
+  
+  // Render Google Sign-In buttons when modal opens
+  setTimeout(() => {
+    if (window.timBurtonAuth) {
+      const googleButtons = document.querySelectorAll('[data-google-signin]');
+      googleButtons.forEach(btn => {
+        // Clear any existing content first
+        btn.innerHTML = '';
+        // Render the button
+        window.timBurtonAuth.renderGoogleSignInButton(btn);
+      });
+    }
+  }, 100);
 }
 
 /**
