@@ -1,15 +1,18 @@
 /**
  * Client-side Authentication Module for Tim Burton Docuseries
- * This code will be added to Webflow as external scripts
+ * Clean Firebase Auth implementation with unified backend sync
+ * 
+ * Architecture:
+ * 1. All authentication happens via Firebase Auth SDK (client-side)
+ * 2. Backend has ONE endpoint (/auth/session) for token verification and user sync
+ * 3. Single localStorage key (timBurtonSession) with consistent schema
+ * 4. Clear auth flow: Firebase Auth → Session Sync → Purchase Status → UI Update
  */
 
 class TimBurtonAuth {
   constructor() {
+    // Backend API
     this.apiBaseUrl = 'https://us-central1-tim-burton-docuseries.cloudfunctions.net/api';
-    this.currentUser = null;
-    this.customToken = null;
-    this.purchaseStatus = null;
-    this.firebaseAuth = null;
     
     // Firebase configuration (public - safe to expose)
     this.firebaseConfig = {
@@ -17,19 +20,27 @@ class TimBurtonAuth {
       authDomain: "tim-burton-docuseries.firebaseapp.com",
       projectId: "tim-burton-docuseries"
     };
-
-    // Initialize Firebase Auth
-    this.initFirebase();
     
-    // Initialize Google Sign-In
+    // State
+    this.firebaseAuth = null;
+    this.currentUser = null;
+    this.idToken = null;
+    this.purchaseStatus = null;
+    this.isInitialized = false;
+    
+    // Initialize
+    this.initFirebase();
     this.initGoogleSignIn();
   }
   
+  // ============================================================================
+  // INITIALIZATION
+  // ============================================================================
+  
   /**
-   * Initialize Firebase Auth
+   * Initialize Firebase Auth SDK
    */
   initFirebase() {
-    // Load Firebase scripts if not already loaded
     if (!window.firebase) {
       const scripts = [
         'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
@@ -46,6 +57,9 @@ class TimBurtonAuth {
             this.setupFirebase();
           }
         };
+        script.onerror = () => {
+          console.error('Failed to load Firebase SDK:', src);
+        };
         document.head.appendChild(script);
       });
     } else {
@@ -57,37 +71,47 @@ class TimBurtonAuth {
    * Setup Firebase after scripts load
    */
   setupFirebase() {
-    if (window.firebase && !firebase.apps.length) {
-      firebase.initializeApp(this.firebaseConfig);
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(this.firebaseConfig);
+      }
+      
       this.firebaseAuth = firebase.auth();
       
-      // Listen for auth state changes
-      this.firebaseAuth.onAuthStateChanged(async (user) => {
-        if (user) {
-          await this.handleFirebaseAuthSuccess(user);
+      // Listen for auth state changes (single source of truth)
+      this.firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
+        if (firebaseUser) {
+          await this.handleAuthStateChange(firebaseUser);
+        } else {
+          this.handleSignOut();
         }
       });
       
-      // Try to restore session
-      this.restoreSession();
+      this.isInitialized = true;
+      console.log('✅ Firebase Auth initialized');
+      
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
     }
   }
-
+  
   /**
    * Initialize Google Sign-In
    */
   initGoogleSignIn() {
-    // Load Google Sign-In script
     if (!window.google) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.onload = () => this.setupGoogleSignIn();
+      script.onerror = () => {
+        console.error('Failed to load Google Sign-In SDK');
+      };
       document.head.appendChild(script);
     } else {
       this.setupGoogleSignIn();
     }
   }
-
+  
   /**
    * Setup Google Sign-In button
    */
@@ -99,157 +123,123 @@ class TimBurtonAuth {
         auto_select: false,
         cancel_on_tap_outside: true
       });
+      console.log('✅ Google Sign-In initialized');
     }
   }
-
+  
+  // ============================================================================
+  // AUTHENTICATION HANDLERS
+  // ============================================================================
+  
+  /**
+   * Handle Firebase Auth state changes
+   * This is the SINGLE entry point for all successful authentications
+   */
+  async handleAuthStateChange(firebaseUser) {
+    try {
+      console.log('🔐 Auth state changed:', firebaseUser.email);
+      
+      // Get fresh ID token
+      this.idToken = await firebaseUser.getIdToken(true);
+      
+      // Sync with backend (creates/updates user in Firestore)
+      await this.syncSession(this.idToken);
+      
+      // Fetch purchase status
+      await this.fetchPurchaseStatus();
+      
+      // Save session to localStorage
+      this.saveSession();
+      
+      // Notify UI
+      this.dispatchAuthEvent('signIn', this.currentUser);
+      
+      console.log('✅ Authentication successful:', this.currentUser?.email);
+      
+    } catch (error) {
+      console.error('❌ Auth state change error:', error);
+      this.dispatchAuthEvent('authError', { error: error.message });
+    }
+  }
+  
   /**
    * Handle Google Sign-In callback
+   * Signs into Firebase Auth with the Google credential
    */
   async handleGoogleSignIn(response) {
     try {
       const { credential } = response;
       
-      // Send the ID token to our backend
-      const result = await this.signInWithGoogle(credential);
+      // Sign in to Firebase with Google credential
+      const googleAuthProvider = firebase.auth.GoogleAuthProvider.credential(credential);
+      await this.firebaseAuth.signInWithCredential(googleAuthProvider);
       
-      if (result.success) {
-        this.currentUser = result.user;
-        this.customToken = result.customToken;
-        
-        // Store user data in localStorage
-        localStorage.setItem('timBurtonUser', JSON.stringify(result.user));
-        localStorage.setItem('timBurtonToken', result.customToken);
-        
-        // Fetch purchase status
-        await this.fetchPurchaseStatus();
-        
-        // Trigger custom event for Webflow
-        this.dispatchAuthEvent('signIn', result.user);
-        
-        console.log('Sign-in successful:', result.user);
-      } else {
-        throw new Error(result.error || 'Sign-in failed');
-      }
+      // onAuthStateChanged will handle the rest
+      
     } catch (error) {
-      console.error('Google Sign-In Error:', error);
+      console.error('❌ Google Sign-In error:', error);
       this.dispatchAuthEvent('signInError', { error: error.message });
     }
   }
-
-  /**
-   * Handle Firebase Auth success
-   */
-  async handleFirebaseAuthSuccess(firebaseUser) {
-    try {
-      // Get ID token from Firebase
-      const idToken = await firebaseUser.getIdToken();
-      
-      // Sync with backend (creates/updates user in Firestore)
-      await this.syncWithBackend(idToken, firebaseUser);
-      
-      // Fetch purchase status
-      await this.fetchPurchaseStatus();
-      
-      // Trigger custom event for Webflow
-      this.dispatchAuthEvent('signIn', this.currentUser);
-      
-      console.log('Authentication successful:', this.currentUser);
-    } catch (error) {
-      console.error('Auth success handler error:', error);
-    }
-  }
   
   /**
-   * Sync Firebase user with backend
+   * Sign in with email/password
+   * All authentication goes through Firebase Auth SDK
    */
-  async syncWithBackend(idToken, firebaseUser) {
-    try {
-      // Determine which provider was used
-      const isGoogleAuth = firebaseUser.providerData && 
-                          firebaseUser.providerData.some(p => p.providerId === 'google.com');
-      
-      // Use appropriate endpoint based on provider
-      const endpoint = isGoogleAuth ? '/auth/google' : '/auth/verify';
-      
-      const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        this.currentUser = result.user;
-        this.customToken = idToken;
-        
-        // Store in localStorage
-        localStorage.setItem('timBurtonUser', JSON.stringify(result.user));
-        localStorage.setItem('timBurtonToken', idToken);
-      }
-    } catch (error) {
-      console.error('Backend sync error:', error);
-    }
-  }
-  
-  /**
-   * Handle email/password sign in (using Firebase Auth)
-   */
-  async handleEmailSignIn(email, password) {
+  async signInWithEmail(email, password) {
     try {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
       }
       
-      // Sign in with Firebase Auth
-      const userCredential = await this.firebaseAuth.signInWithEmailAndPassword(email, password);
+      await this.firebaseAuth.signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged will handle the rest
       
-      // The onAuthStateChanged listener will handle the rest
       return { success: true };
       
     } catch (error) {
-      console.error('Email Sign-In Error:', error);
-      let errorMessage = 'Sign-in failed';
+      console.error('❌ Email sign-in error:', error);
       
+      let errorMessage = 'Sign-in failed';
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email';
       } else if (error.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
       }
       
       this.dispatchAuthEvent('signInError', { error: errorMessage });
       return { success: false, error: errorMessage };
     }
   }
-
+  
   /**
-   * Handle email/password sign up (using Firebase Auth)
+   * Sign up with email/password
    */
-  async handleEmailSignUp(email, password, name) {
+  async signUpWithEmail(email, password, name) {
     try {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
       }
       
-      // Create user with Firebase Auth
       const userCredential = await this.firebaseAuth.createUserWithEmailAndPassword(email, password);
       
       // Update display name
       if (name && userCredential.user) {
-        await userCredential.user.updateProfile({
-          displayName: name
-        });
+        await userCredential.user.updateProfile({ displayName: name });
       }
       
-      // The onAuthStateChanged listener will handle the rest
+      // onAuthStateChanged will handle the rest
+      
       return { success: true };
       
     } catch (error) {
-      console.error('Email Sign-Up Error:', error);
-      let errorMessage = 'Sign-up failed';
+      console.error('❌ Email sign-up error:', error);
       
+      let errorMessage = 'Sign-up failed';
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'Email already exists';
       } else if (error.code === 'auth/invalid-email') {
@@ -262,27 +252,25 @@ class TimBurtonAuth {
       return { success: false, error: errorMessage };
     }
   }
-
+  
   /**
-   * Handle password reset (using Firebase Auth)
+   * Send password reset email
    */
-  async handlePasswordReset(email) {
+  async resetPassword(email) {
     try {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
       }
       
-      // Send password reset email via Firebase
       await this.firebaseAuth.sendPasswordResetEmail(email);
       
       this.dispatchAuthEvent('passwordResetSent', { email });
-      console.log('Password reset email sent to:', email);
       return { success: true };
       
     } catch (error) {
-      console.error('Password Reset Error:', error);
-      let errorMessage = 'Password reset failed';
+      console.error('❌ Password reset error:', error);
       
+      let errorMessage = 'Password reset failed';
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email';
       } else if (error.code === 'auth/invalid-email') {
@@ -293,169 +281,212 @@ class TimBurtonAuth {
       return { success: false, error: errorMessage };
     }
   }
-
+  
   /**
-   * Sign in with Google ID token
+   * Sign out
    */
-  async signInWithGoogle(idToken) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/google`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ idToken })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Sign in with email and password
-   */
-  async signInWithEmail(email, password) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Sign up with email and password
-   */
-  async signUpWithEmail(email, password, name) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, name })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Reset password
-   */
-  async resetPassword(email) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/reset-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Verify custom token
-   */
-  async verifyToken(token) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Get user data
-   */
-  async getUser(uid) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/user?uid=${uid}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+  async signOut() {
+    try {
+      // Sign out from Firebase Auth
+      if (this.firebaseAuth) {
+        await this.firebaseAuth.signOut();
       }
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Refresh custom token
-   */
-  async refreshToken(uid) {
-    const response = await fetch(`${this.apiBaseUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uid })
-    });
-
-    return await response.json();
-  }
-
-  /**
-   * Sign out user
-   */
-  signOut() {
-    // Sign out from Firebase Auth
-    if (this.firebaseAuth) {
-      this.firebaseAuth.signOut();
+      
+      // onAuthStateChanged will call handleSignOut()
+      
+    } catch (error) {
+      console.error('❌ Sign out error:', error);
+      // Force sign out even if Firebase fails
+      this.handleSignOut();
     }
-    
+  }
+  
+  /**
+   * Handle sign out cleanup
+   */
+  handleSignOut() {
     this.currentUser = null;
-    this.customToken = null;
+    this.idToken = null;
     this.purchaseStatus = null;
     
     // Clear localStorage
-    localStorage.removeItem('timBurtonUser');
-    localStorage.removeItem('timBurtonToken');
+    localStorage.removeItem('timBurtonSession');
     
-    // Sign out from Google
+    // Disable Google auto-select
     if (window.google) {
       google.accounts.id.disableAutoSelect();
     }
     
-    // Trigger custom event for Webflow
+    // Notify UI
     this.dispatchAuthEvent('signOut', null);
     
-    console.log('User signed out');
+    console.log('✅ User signed out');
   }
-
+  
+  // ============================================================================
+  // BACKEND SYNC (Single Unified Endpoint)
+  // ============================================================================
+  
   /**
-   * Check if user is signed in
+   * Sync session with backend
+   * This is the ONLY backend endpoint for authentication
    */
+  async syncSession(idToken) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/auth/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Session sync failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Session sync failed');
+      }
+      
+      this.currentUser = result.user;
+      console.log('✅ Session synced with backend');
+      
+    } catch (error) {
+      console.error('❌ Session sync error:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Fetch purchase status from backend
+   */
+  async fetchPurchaseStatus() {
+    if (!this.idToken) {
+      this.purchaseStatus = null;
+      return null;
+    }
+    
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/payments/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.idToken}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Purchase status fetch failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        this.purchaseStatus = result.purchaseStatus;
+        console.log('✅ Purchase status fetched');
+      } else {
+        this.purchaseStatus = null;
+      }
+      
+      return this.purchaseStatus;
+      
+    } catch (error) {
+      console.error('❌ Purchase status error:', error);
+      this.purchaseStatus = null;
+      return null;
+    }
+  }
+  
+  // ============================================================================
+  // SESSION PERSISTENCE
+  // ============================================================================
+  
+  /**
+   * Save session to localStorage
+   */
+  saveSession() {
+    try {
+      const session = {
+        user: this.currentUser,
+        idToken: this.idToken,
+        purchaseStatus: this.purchaseStatus,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem('timBurtonSession', JSON.stringify(session));
+      
+    } catch (error) {
+      console.error('❌ Save session error:', error);
+    }
+  }
+  
+  /**
+   * Restore session from localStorage
+   * Note: Firebase Auth maintains its own session, this is just for initial state
+   */
+  async restoreSession() {
+    try {
+      const sessionData = localStorage.getItem('timBurtonSession');
+      
+      if (!sessionData) {
+        return false;
+      }
+      
+      const session = JSON.parse(sessionData);
+      
+      // Check if session is too old (24 hours)
+      const MAX_AGE = 24 * 60 * 60 * 1000;
+      if (Date.now() - session.timestamp > MAX_AGE) {
+        console.log('Session expired, clearing...');
+        localStorage.removeItem('timBurtonSession');
+        return false;
+      }
+      
+      // Restore state temporarily (Firebase auth will refresh it)
+      this.currentUser = session.user;
+      this.idToken = session.idToken;
+      this.purchaseStatus = session.purchaseStatus;
+      
+      // Dispatch event so UI can update immediately
+      this.dispatchAuthEvent('sessionRestored', this.currentUser);
+      
+      console.log('✅ Session restored from localStorage');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Session restore error:', error);
+      localStorage.removeItem('timBurtonSession');
+      return false;
+    }
+  }
+  
+  // ============================================================================
+  // PUBLIC API - State Getters
+  // ============================================================================
+  
   isSignedIn() {
-    return this.currentUser !== null && this.customToken !== null;
+    return this.currentUser !== null && this.idToken !== null;
   }
-
-  /**
-   * Check if user has made a purchase
-   */
+  
   hasPurchase() {
     return this.purchaseStatus !== null && this.purchaseStatus.hasAccess;
   }
-
-  /**
-   * Get purchase status
-   */
-  getPurchaseStatus() {
-    return this.purchaseStatus;
-  }
-
-  /**
-   * Check if user has box set access
-   */
+  
   hasBoxSetAccess() {
     return this.purchaseStatus && this.purchaseStatus.type === 'boxset';
   }
-
+  
+  getCurrentUser() {
+    return this.currentUser;
+  }
+  
+  getPurchaseStatus() {
+    return this.purchaseStatus;
+  }
+  
   /**
-   * Get user's button state
+   * Get button state for UI
    * Returns: 'not-signed-in', 'signed-in-not-paid', 'signed-in-paid'
    */
   getButtonState() {
@@ -467,108 +498,67 @@ class TimBurtonAuth {
       return 'signed-in-not-paid';
     }
   }
-
+  
+  // ============================================================================
+  // CONTENT ACCESS
+  // ============================================================================
+  
   /**
-   * Get current user
-   */
-  getCurrentUser() {
-    return this.currentUser;
-  }
-
-  /**
-   * Get custom token
-   */
-  getCustomToken() {
-    return this.customToken;
-  }
-
-  /**
-   * Fetch purchase status from backend
-   */
-  async fetchPurchaseStatus() {
-    if (!this.isSignedIn()) {
-      this.purchaseStatus = null;
-      return null;
-    }
-
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/payments/status`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.customToken}`
-        }
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        this.purchaseStatus = result.purchaseStatus;
-        return this.purchaseStatus;
-      } else {
-        this.purchaseStatus = null;
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching purchase status:', error);
-      this.purchaseStatus = null;
-      return null;
-    }
-  }
-
-  /**
-   * Check content access for a specific content type
+   * Check if user has access to specific content type
    */
   async checkContentAccess(contentType) {
     if (!this.isSignedIn()) {
       return { hasAccess: false, reason: 'not-signed-in' };
     }
-
+    
     if (!this.purchaseStatus) {
       await this.fetchPurchaseStatus();
     }
-
+    
     if (!this.hasPurchase()) {
       return { hasAccess: false, reason: 'no-purchase' };
     }
-
-    // Check specific content access
+    
     switch (contentType) {
       case 'episodes':
         return { hasAccess: true, reason: 'purchased' };
       case 'bonus':
-        return { 
-          hasAccess: this.hasBoxSetAccess(), 
-          reason: this.hasBoxSetAccess() ? 'boxset-purchased' : 'regular-purchase-only' 
+        return {
+          hasAccess: this.hasBoxSetAccess(),
+          reason: this.hasBoxSetAccess() ? 'boxset-purchased' : 'regular-purchase-only'
         };
       default:
         return { hasAccess: false, reason: 'unknown-content-type' };
     }
   }
-
+  
   /**
-   * Get secure content URL (for episodes and bonus content)
+   * Get secure content URL
    */
   async getSecureContentUrl(contentId, contentType) {
     if (!this.isSignedIn()) {
       throw new Error('User must be signed in to access content');
     }
-
+    
     const accessCheck = await this.checkContentAccess(contentType);
     if (!accessCheck.hasAccess) {
       throw new Error(`Access denied: ${accessCheck.reason}`);
     }
-
+    
     try {
       const response = await fetch(`${this.apiBaseUrl}/content/secure-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.customToken}`
+          'Authorization': `Bearer ${this.idToken}`
         },
         body: JSON.stringify({ contentId, contentType })
       });
-
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get secure URL: ${response.status}`);
+      }
+      
       const result = await response.json();
       
       if (result.success) {
@@ -576,55 +566,19 @@ class TimBurtonAuth {
       } else {
         throw new Error(result.error || 'Failed to get secure content URL');
       }
+      
     } catch (error) {
-      console.error('Error getting secure content URL:', error);
+      console.error('❌ Secure content URL error:', error);
       throw error;
     }
   }
-
+  
+  // ============================================================================
+  // EVENT SYSTEM
+  // ============================================================================
+  
   /**
-   * Restore session from localStorage
-   */
-  async restoreSession() {
-    try {
-      const storedUser = localStorage.getItem('timBurtonUser');
-      const storedToken = localStorage.getItem('timBurtonToken');
-      
-      if (storedUser && storedToken) {
-        // For now, we'll restore the session without server verification
-        // In production, you might want to verify the token with the server
-        this.currentUser = JSON.parse(storedUser);
-        this.customToken = storedToken;
-        
-        // Try to fetch purchase status (this might fail in local testing)
-        try {
-          await this.fetchPurchaseStatus();
-        } catch (error) {
-          console.log('Purchase status fetch failed, continuing with session restoration:', error);
-          // Set default purchase status if fetch fails
-          this.purchaseStatus = null;
-        }
-        
-        // Trigger custom event for Webflow
-        this.dispatchAuthEvent('sessionRestored', this.currentUser);
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Session restore error:', error);
-      // Only clear storage if there's a critical error
-      if (error.message && error.message.includes('JSON')) {
-        // Invalid JSON in localStorage, clear it
-        this.signOut();
-      }
-      return false;
-    }
-  }
-
-  /**
-   * Dispatch custom authentication events
+   * Dispatch custom authentication events for UI to listen to
    */
   dispatchAuthEvent(eventType, data) {
     const event = new CustomEvent('timBurtonAuth', {
@@ -641,7 +595,11 @@ class TimBurtonAuth {
     
     document.dispatchEvent(event);
   }
-
+  
+  // ============================================================================
+  // UI HELPERS
+  // ============================================================================
+  
   /**
    * Render Google Sign-In button
    */
@@ -660,6 +618,10 @@ class TimBurtonAuth {
     }
   }
 }
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
 // Initialize authentication when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

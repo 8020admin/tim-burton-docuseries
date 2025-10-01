@@ -149,7 +149,7 @@ function initializeAuthHandlers() {
       
       try {
         if (window.timBurtonAuth) {
-          const result = await window.timBurtonAuth.handleEmailSignIn(email, password);
+          const result = await window.timBurtonAuth.signInWithEmail(email, password);
           if (!result.success) {
             showAuthError(result.error);
           }
@@ -177,7 +177,7 @@ function initializeAuthHandlers() {
       
       try {
         if (window.timBurtonAuth) {
-          const result = await window.timBurtonAuth.handleEmailSignUp(email, password, name);
+          const result = await window.timBurtonAuth.signUpWithEmail(email, password, name);
           if (!result.success) {
             showAuthError(result.error);
           }
@@ -197,7 +197,7 @@ function initializeAuthHandlers() {
       
       const email = prompt('Enter your email address:');
       if (email && window.timBurtonAuth) {
-        const result = await window.timBurtonAuth.handlePasswordReset(email);
+        const result = await window.timBurtonAuth.resetPassword(email);
         if (!result.success) {
           showAuthError(result.error);
         }
