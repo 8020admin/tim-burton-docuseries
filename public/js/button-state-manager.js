@@ -37,7 +37,10 @@ class ButtonStateManager {
       
       // Handle intended action after successful authentication
       if ((event.detail.type === 'signIn' || event.detail.type === 'signUp' || event.detail.type === 'sessionRestored') && this.intendedAction) {
-        this.executeIntendedAction();
+        // Add small delay to ensure auth state is fully propagated
+        setTimeout(() => {
+          this.executeIntendedAction();
+        }, 100);
       }
     });
 
