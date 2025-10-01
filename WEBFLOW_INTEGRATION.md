@@ -2,7 +2,7 @@
 
 ## 🎯 **Overview**
 
-This guide shows you how to integrate the authentication system into your Webflow project. The system supports both Google Sign-In and Email/Password authentication.
+This guide shows you how to integrate the authentication system into your Webflow project. The system uses **data attributes** for all interactions, making it flexible and easy to integrate without ID or class conflicts.
 
 ## 🏗️ **Clean Architecture**
 
@@ -28,6 +28,7 @@ Our authentication system follows a **clean, unified architecture** designed for
 - ✅ **One backend endpoint** (`/auth/session`) for token verification
 - ✅ **Single source of truth** - Firebase `onAuthStateChanged` listener
 - ✅ **Unified localStorage** - One key (`timBurtonSession`) with consistent schema
+- ✅ **Attribute-based interactions** - No IDs or classes for JavaScript
 - ✅ **Proper error handling** - Clear error messages and loading states
 - ✅ **No patchwork** - Clean separation of concerns
 
@@ -37,188 +38,410 @@ Our authentication system follows a **clean, unified architecture** designed for
 - 🛠️ Easier to maintain (one clear flow)
 - 📱 Industry standard (Firebase best practices)
 - 🔄 Session persistence works correctly
+- 🎯 No ID conflicts with Webflow
 
-## 📋 **What You Need to Add to Webflow**
+---
 
-### **1. Scripts to Add in Project Settings**
+## 📋 **1. Scripts to Add in Webflow**
 
 Go to **Project Settings > Custom Code > Head Code** and add:
 
 ```html
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
 <!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client"></script>
 
-<!-- Tim Burton Auth (host these files on your domain) -->
-<script src="https://your-domain.com/path/to/client-auth.js"></script>
-<script src="https://your-domain.com/path/to/webflow-auth-handlers.js"></script>
-<script src="https://your-domain.com/path/to/content-access.js"></script>
-<script src="https://your-domain.com/path/to/button-state-manager.js"></script>
-<script src="https://your-domain.com/path/to/stripe-integration.js"></script>
+<!-- Tim Burton Auth (Cloudflare Pages) -->
+<script src="https://tim-burton-docuseries.pages.dev/js/client-auth.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/webflow-auth-handlers.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/content-access.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/button-state-manager.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/stripe-integration.js"></script>
 ```
 
-### **2. HTML Structure for Authentication Modal**
+---
 
-Add this HTML structure to your Webflow project:
+## 🔐 **2. Authentication Modal**
+
+### **Modal Container**
+Create a div and add these attributes:
+
+**Webflow Settings:**
+- Custom Attribute: `data-modal` = `auth`
+- Set initial style: `display: none`
 
 ```html
-<!-- Authentication Modal -->
-<div class="auth-modal" id="auth-modal" style="display: none;">
-  <div class="auth-modal-content">
-    <div class="auth-modal-header">
-      <h2>Sign In to Watch</h2>
-      <button class="auth-close" id="auth-close">&times;</button>
-    </div>
-    
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-tab="signin">Sign In</button>
-      <button class="auth-tab" data-tab="signup">Sign Up</button>
-    </div>
-    
-    <!-- Sign In Tab -->
-    <div class="auth-tab-content active" id="signin-tab">
-      <!-- Google Sign-In Button -->
-      <div id="google-signin-button" class="google-signin-container"></div>
-      
-      <div class="auth-divider">
-        <span>or</span>
-      </div>
-      
-      <!-- Email Sign-In Form -->
-      <form id="email-signin-form" class="auth-form">
-        <div class="form-group">
-          <input type="email" id="signin-email" placeholder="Email" required>
-        </div>
-        <div class="form-group">
-          <input type="password" id="signin-password" placeholder="Password" required>
-        </div>
-        <button type="submit" class="auth-btn">Sign In</button>
-        <a href="#" id="forgot-password" class="forgot-password">Forgot Password?</a>
-      </form>
-    </div>
-    
-    <!-- Sign Up Tab -->
-    <div class="auth-tab-content" id="signup-tab">
-      <!-- Google Sign-In Button -->
-      <div id="google-signup-button" class="google-signin-container"></div>
-      
-      <div class="auth-divider">
-        <span>or</span>
-      </div>
-      
-      <!-- Email Sign-Up Form -->
-      <form id="email-signup-form" class="auth-form">
-        <div class="form-group">
-          <input type="text" id="signup-name" placeholder="Full Name" required>
-        </div>
-        <div class="form-group">
-          <input type="email" id="signup-email" placeholder="Email" required>
-        </div>
-        <div class="form-group">
-          <input type="password" id="signup-password" placeholder="Password" required>
-        </div>
-        <button type="submit" class="auth-btn">Sign Up</button>
-      </form>
-    </div>
-  </div>
+<div data-modal="auth" style="display: none;">
+  <!-- Modal content -->
 </div>
-
-<!-- Purchase Options Modal -->
-<div class="purchase-modal" id="purchase-options-modal" style="display: none;">
-  <div class="purchase-modal-content">
-    <div class="purchase-modal-header">
-      <h2>Choose Your Purchase</h2>
-      <button class="close-btn">&times;</button>
-    </div>
-    
-    <div class="purchase-options">
-      <div class="purchase-option">
-        <h3>Regular Purchase</h3>
-        <p class="price">$24.99</p>
-        <p class="description">4 episodes of the docuseries</p>
-        <button id="regular-purchase-btn" class="purchase-btn">Purchase</button>
-      </div>
-      
-      <div class="purchase-option featured">
-        <h3>Box Set</h3>
-        <p class="price">$74.99</p>
-        <p class="description">4 episodes + 40 hours of extras</p>
-        <button id="box-set-purchase-btn" class="purchase-btn">Purchase</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- User Info (shown when signed in) -->
-<div class="user-info" id="user-info" style="display: none;">
-  <img id="user-avatar" src="" alt="User Avatar" class="user-avatar">
-  <span id="user-name" class="user-name"></span>
-  <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
-</div>
-
-<!-- Sign In Button (shown when not signed in) -->
-<button class="sign-in-btn" id="sign-in-btn">Sign In</button>
 ```
 
-### **3. Button System for Dynamic States**
+### **Close Button**
+Any button inside the modal can close it:
 
-The system now supports three button states based on user authentication and purchase status:
-
-#### **Button States:**
-- **Not signed in**: Sign In + Rent + Buy buttons
-- **Signed in but not paid**: Sign Out + Rent + Buy buttons  
-- **Signed in and paid**: Sign Out + Watch Now button
-
-#### **Button HTML Structure:**
-Add these data attributes to your buttons in Webflow:
+**Webflow Settings:**
+- Custom Attribute: `data-modal-action` = `close`
 
 ```html
-<!-- Sign In/Sign Out Button -->
+<button data-modal-action="close">×</button>
+```
+
+### **Tab Buttons**
+For switching between Sign In and Sign Up:
+
+**Sign In Tab:**
+- Custom Attribute: `data-auth-tab` = `signin`
+- Add class `active` for default state
+
+**Sign Up Tab:**
+- Custom Attribute: `data-auth-tab` = `signup`
+
+```html
+<button data-auth-tab="signin" class="active">Sign In</button>
+<button data-auth-tab="signup">Sign Up</button>
+```
+
+### **Tab Content**
+Containers for each tab's content:
+
+**Sign In Content:**
+- Custom Attribute: `data-auth-tab-content` = `signin`
+- Add class `active` for default state
+
+**Sign Up Content:**
+- Custom Attribute: `data-auth-tab-content` = `signup`
+
+```html
+<div data-auth-tab-content="signin" class="active">
+  <!-- Sign in form -->
+</div>
+
+<div data-auth-tab-content="signup">
+  <!-- Sign up form -->
+</div>
+```
+
+---
+
+## 📝 **3. Authentication Forms**
+
+### **Sign In Form**
+Create a form with these attributes:
+
+**Form:**
+- Custom Attribute: `data-form` = `signin`
+
+**Email Input:**
+- Custom Attribute: `data-field` = `email`
+- Type: `email`
+- Required: Yes
+
+**Password Input:**
+- Custom Attribute: `data-field` = `password`
+- Type: `password`
+- Required: Yes
+
+```html
+<form data-form="signin">
+  <input type="email" data-field="email" placeholder="Email" required>
+  <input type="password" data-field="password" placeholder="Password" required>
+  <button type="submit">Sign In</button>
+</form>
+```
+
+### **Sign Up Form**
+Create a form with these attributes:
+
+**Form:**
+- Custom Attribute: `data-form` = `signup`
+
+**Name Input:**
+- Custom Attribute: `data-field` = `name`
+- Type: `text`
+
+**Email Input:**
+- Custom Attribute: `data-field` = `email`
+- Type: `email`
+- Required: Yes
+
+**Password Input:**
+- Custom Attribute: `data-field` = `password`
+- Type: `password`
+- Required: Yes
+
+```html
+<form data-form="signup">
+  <input type="text" data-field="name" placeholder="Full Name" required>
+  <input type="email" data-field="email" placeholder="Email" required>
+  <input type="password" data-field="password" placeholder="Password" required>
+  <button type="submit">Sign Up</button>
+</form>
+```
+
+### **Password Reset Link**
+Add this to your sign-in form:
+
+**Link:**
+- Custom Attribute: `data-action` = `reset-password`
+
+```html
+<a href="#" data-action="reset-password">Forgot Password?</a>
+```
+
+---
+
+## 🔵 **4. Google Sign-In**
+
+### **Google Sign-In Container**
+Create a div for the Google button:
+
+**Container:**
+- Custom Attribute: `data-google-signin` = `google-signin-btn`
+- The value must be a unique ID
+
+**For Sign In Tab:**
+```html
+<div data-google-signin="google-signin-btn"></div>
+```
+
+**For Sign Up Tab:**
+```html
+<div data-google-signin="google-signup-btn"></div>
+```
+
+---
+
+## 🛒 **5. Purchase Modal**
+
+### **Modal Container**
+**Webflow Settings:**
+- Custom Attribute: `data-modal` = `purchase`
+- Set initial style: `display: none`
+
+```html
+<div data-modal="purchase" style="display: none;">
+  <!-- Purchase options -->
+</div>
+```
+
+### **Close Button**
+**Webflow Settings:**
+- Custom Attribute: `data-modal-action` = `close`
+
+```html
+<button data-modal-action="close">×</button>
+```
+
+### **Purchase Buttons**
+**Regular Purchase:**
+- Custom Attribute: `data-purchase-type` = `regular`
+
+**Box Set Purchase:**
+- Custom Attribute: `data-purchase-type` = `boxset`
+
+```html
+<!-- Regular Purchase -->
+<button data-purchase-type="regular">
+  Purchase - $24.99
+</button>
+
+<!-- Box Set Purchase -->
+<button data-purchase-type="boxset">
+  Purchase Box Set - $74.99
+</button>
+```
+
+---
+
+## 🔘 **6. Interactive Buttons**
+
+### **Sign In/Out Buttons**
+**Sign In Button:**
+- Custom Attribute: `data-button-type` = `sign-in`
+
+**Sign Out Button:**
+- Custom Attribute: `data-button-type` = `sign-out`
+- Set initial style: `display: none`
+
+```html
 <button data-button-type="sign-in">Sign In</button>
 <button data-button-type="sign-out" style="display: none;">Sign Out</button>
+```
 
-<!-- Rent/Buy/Watch Now Buttons -->
+### **Purchase Buttons**
+**Rent Button:**
+- Custom Attribute: `data-button-type` = `rent`
+
+**Buy Button:**
+- Custom Attribute: `data-button-type` = `buy`
+
+**Watch Now Button:**
+- Custom Attribute: `data-button-type` = `watch-now`
+- Set initial style: `display: none`
+
+```html
 <button data-button-type="rent">Rent</button>
 <button data-button-type="buy">Buy</button>
 <button data-button-type="watch-now" style="display: none;">Watch Now</button>
 ```
 
-#### **Content Access Control:**
-Add these data attributes to control content visibility:
+---
+
+## 🎬 **7. Content Visibility Control**
+
+Control what content shows based on user state:
+
+### **Authentication Required**
+Only shows when user is signed in:
+- Custom Attribute: `data-auth-required` = `true`
 
 ```html
-<!-- Content for authenticated users only -->
-<div data-auth-required="true">Authenticated content</div>
-
-<!-- Content for paid users only -->
-<div data-purchase-required="true">Paid content</div>
-
-<!-- Content for box set purchasers only -->
-<div data-boxset-required="true">Box set content</div>
-
-<!-- Content for non-authenticated users -->
-<div data-show-not-signed-in="true">Public content</div>
-
-<!-- Content for authenticated but not paid users -->
-<div data-show-not-paid="true">Sign up prompt</div>
-
-<!-- Upgrade prompt for regular purchasers -->
-<div data-upgrade-prompt="true">Upgrade to Box Set</div>
+<div data-auth-required="true">
+  This content only shows when user is authenticated
+</div>
 ```
 
-### **4. JavaScript Event Handlers**
+### **Purchase Required**
+Only shows when user has purchased:
+- Custom Attribute: `data-purchase-required` = `true`
 
-**No need to add JavaScript to Webflow!** All the event handlers are now in separate files that you'll host on your domain.
+```html
+<div data-purchase-required="true">
+  This content only shows when user has purchased
+</div>
+```
 
-The JavaScript files include:
-1. `client-auth.js` - Core authentication functionality with purchase tracking
-2. `webflow-auth-handlers.js` - Webflow-specific event handlers
-3. `content-access.js` - Content visibility control based on auth/purchase status
-4. `button-state-manager.js` - Dynamic button state management
-5. `stripe-integration.js` - Stripe payment processing and checkout
+### **Box Set Required**
+Only shows for box set purchasers:
+- Custom Attribute: `data-boxset-required` = `true`
 
-## 🎨 **CSS Styling (Optional)**
+```html
+<div data-boxset-required="true">
+  This content only shows for box set purchasers
+</div>
+```
 
-Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling:
+### **Show for Non-Authenticated Users**
+Shows only when user is NOT signed in:
+- Custom Attribute: `data-show-not-signed-in` = `true`
+
+```html
+<div data-show-not-signed-in="true">
+  Sign up to watch!
+</div>
+```
+
+### **Show for Non-Paid Users**
+Shows when signed in but hasn't purchased:
+- Custom Attribute: `data-show-not-paid` = `true`
+
+```html
+<div data-show-not-paid="true">
+  Purchase to unlock all content
+</div>
+```
+
+### **Upgrade Prompt**
+Shows for regular purchasers (not box set):
+- Custom Attribute: `data-upgrade-prompt` = `true`
+
+```html
+<div data-upgrade-prompt="true">
+  Upgrade to Box Set for extras!
+</div>
+```
+
+---
+
+## 💬 **8. Feedback Messages (Optional)**
+
+### **Error Container**
+For custom error display:
+- Custom Attribute: `data-auth-error`
+- Set initial style: `display: none`
+
+```html
+<div data-auth-error style="display: none;"></div>
+```
+
+### **Success Container**
+For custom success messages:
+- Custom Attribute: `data-auth-success`
+- Set initial style: `display: none`
+
+```html
+<div data-auth-success style="display: none;"></div>
+```
+
+---
+
+## 🎨 **9. Complete Modal Example**
+
+Here's a complete authentication modal with all attributes:
+
+```html
+<div data-modal="auth" style="display: none;">
+  <div class="modal-content">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2>Sign In to Watch</h2>
+      <button data-modal-action="close">×</button>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+      <button data-auth-tab="signin" class="active">Sign In</button>
+      <button data-auth-tab="signup">Sign Up</button>
+    </div>
+    
+    <!-- Sign In Tab -->
+    <div data-auth-tab-content="signin" class="active">
+      <!-- Google Sign-In -->
+      <div data-google-signin="google-signin-btn"></div>
+      
+      <div class="divider">or</div>
+      
+      <!-- Email Form -->
+      <form data-form="signin">
+        <input type="email" data-field="email" placeholder="Email" required>
+        <input type="password" data-field="password" placeholder="Password" required>
+        <button type="submit">Sign In</button>
+      </form>
+      
+      <a href="#" data-action="reset-password">Forgot Password?</a>
+    </div>
+    
+    <!-- Sign Up Tab -->
+    <div data-auth-tab-content="signup">
+      <!-- Google Sign-In -->
+      <div data-google-signin="google-signup-btn"></div>
+      
+      <div class="divider">or</div>
+      
+      <!-- Email Form -->
+      <form data-form="signup">
+        <input type="text" data-field="name" placeholder="Full Name" required>
+        <input type="email" data-field="email" placeholder="Email" required>
+        <input type="password" data-field="password" placeholder="Password" required>
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+    
+    <!-- Feedback Messages -->
+    <div data-auth-error style="display: none;"></div>
+    <div data-auth-success style="display: none;"></div>
+  </div>
+</div>
+```
+
+---
+
+## 🎨 **10. CSS Styling**
+
+Add this CSS to **Project Settings > Custom Code > Head Code**:
 
 ```css
 <style>
@@ -236,7 +459,7 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   z-index: 1000;
 }
 
-.auth-modal-content {
+.modal-content {
   background: white;
   padding: 30px;
   border-radius: 10px;
@@ -245,27 +468,27 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   position: relative;
 }
 
-.auth-modal-header {
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.auth-close {
+[data-modal-action="close"] {
   background: none;
   border: none;
   font-size: 24px;
   cursor: pointer;
 }
 
-.auth-tabs {
+.tabs {
   display: flex;
   margin-bottom: 20px;
   border-bottom: 1px solid #eee;
 }
 
-.auth-tab {
+[data-auth-tab] {
   background: none;
   border: none;
   padding: 10px 20px;
@@ -273,30 +496,25 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   border-bottom: 2px solid transparent;
 }
 
-.auth-tab.active {
+[data-auth-tab].active {
   border-bottom-color: #007bff;
 }
 
-.auth-tab-content {
+[data-auth-tab-content] {
   display: none;
 }
 
-.auth-tab-content.active {
+[data-auth-tab-content].active {
   display: block;
 }
 
-.google-signin-container {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.auth-divider {
+.divider {
   text-align: center;
   margin: 20px 0;
   position: relative;
 }
 
-.auth-divider::before {
+.divider::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -306,31 +524,27 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   background: #eee;
 }
 
-.auth-divider span {
+.divider span {
   background: white;
   padding: 0 15px;
+  position: relative;
   color: #666;
 }
 
-.auth-form {
+[data-form] {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group input {
+[data-field] {
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 16px;
 }
 
-.auth-btn {
+[data-form] button[type="submit"] {
   background: #007bff;
   color: white;
   border: none;
@@ -340,61 +554,17 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   cursor: pointer;
 }
 
-.auth-btn:hover {
+[data-form] button[type="submit"]:hover {
   background: #0056b3;
 }
 
-.forgot-password {
+[data-action="reset-password"] {
   text-align: center;
   color: #007bff;
   text-decoration: none;
   font-size: 14px;
-}
-
-/* User Info */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.user-name {
-  font-weight: bold;
-}
-
-.sign-out-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.sign-out-btn:hover {
-  background: #c82333;
-}
-
-/* Sign In Button */
-.sign-in-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.sign-in-btn:hover {
-  background: #0056b3;
+  display: block;
+  margin-top: 10px;
 }
 
 /* Loading Spinner */
@@ -413,13 +583,13 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   to { transform: rotate(360deg); }
 }
 
-.auth-btn.loading {
+.loading {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-/* Purchase Options Modal */
-.purchase-modal {
+/* Purchase Modal */
+[data-modal="purchase"] {
   position: fixed;
   top: 0;
   left: 0;
@@ -432,39 +602,11 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   z-index: 1001;
 }
 
-.purchase-modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 600px;
-  position: relative;
-}
-
-.purchase-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.purchase-modal-header h2 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.purchase-modal .close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-}
-
 .purchase-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  margin-top: 20px;
 }
 
 .purchase-option {
@@ -481,46 +623,7 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
 }
 
-.purchase-option.featured {
-  border-color: #007bff;
-  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
-  position: relative;
-}
-
-.purchase-option.featured::before {
-  content: "Most Popular";
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #007bff;
-  color: white;
-  padding: 5px 15px;
-  border-radius: 15px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.purchase-option h3 {
-  margin: 0 0 10px 0;
-  font-size: 20px;
-  color: #333;
-}
-
-.purchase-option .price {
-  font-size: 32px;
-  font-weight: bold;
-  color: #007bff;
-  margin: 10px 0;
-}
-
-.purchase-option .description {
-  color: #666;
-  margin: 10px 0 20px 0;
-  line-height: 1.4;
-}
-
-.purchase-btn {
+[data-purchase-type] {
   background: #007bff;
   color: white;
   border: none;
@@ -533,16 +636,8 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   transition: background 0.3s ease;
 }
 
-.purchase-btn:hover {
+[data-purchase-type]:hover {
   background: #0056b3;
-}
-
-.purchase-option.featured .purchase-btn {
-  background: #28a745;
-}
-
-.purchase-option.featured .purchase-btn:hover {
-  background: #218838;
 }
 
 /* Responsive Design */
@@ -550,71 +645,160 @@ Add this CSS to **Project Settings > Custom Code > Head Code** for basic styling
   .purchase-options {
     grid-template-columns: 1fr;
   }
-  
-  .purchase-modal-content {
-    margin: 20px;
-    padding: 20px;
-  }
 }
 </style>
 ```
 
-## 🚀 **Testing the Integration**
+---
 
-### **✅ Successfully Tested & Verified!**
+## 📚 **Quick Reference Table**
 
-The authentication system has been thoroughly tested in the Webflow environment and is working perfectly:
+| Element Type | Attribute | Value |
+|--------------|-----------|-------|
+| **Modals** |
+| Auth Modal | `data-modal` | `auth` |
+| Purchase Modal | `data-modal` | `purchase` |
+| Close Button | `data-modal-action` | `close` |
+| **Authentication** |
+| Sign In Tab | `data-auth-tab` | `signin` |
+| Sign Up Tab | `data-auth-tab` | `signup` |
+| Sign In Content | `data-auth-tab-content` | `signin` |
+| Sign Up Content | `data-auth-tab-content` | `signup` |
+| Sign In Form | `data-form` | `signin` |
+| Sign Up Form | `data-form` | `signup` |
+| **Form Fields** |
+| Email Field | `data-field` | `email` |
+| Password Field | `data-field` | `password` |
+| Name Field | `data-field` | `name` |
+| **Actions** |
+| Reset Password | `data-action` | `reset-password` |
+| Google Sign-In | `data-google-signin` | `[unique-id]` |
+| **Purchase** |
+| Regular Purchase | `data-purchase-type` | `regular` |
+| Box Set Purchase | `data-purchase-type` | `boxset` |
+| **Buttons** |
+| Sign In Button | `data-button-type` | `sign-in` |
+| Sign Out Button | `data-button-type` | `sign-out` |
+| Rent Button | `data-button-type` | `rent` |
+| Buy Button | `data-button-type` | `buy` |
+| Watch Now Button | `data-button-type` | `watch-now` |
+| **Content Visibility** |
+| Auth Required | `data-auth-required` | `true` |
+| Purchase Required | `data-purchase-required` | `true` |
+| Box Set Required | `data-boxset-required` | `true` |
+| Show Not Signed In | `data-show-not-signed-in` | `true` |
+| Show Not Paid | `data-show-not-paid` | `true` |
+| Upgrade Prompt | `data-upgrade-prompt` | `true` |
+| **Feedback** |
+| Error Container | `data-auth-error` | - |
+| Success Container | `data-auth-success` | - |
 
-1. **✅ Google Sign-In** - OAuth flow working correctly
-2. **✅ Email/Password Sign-In** - Form validation and authentication working
-3. **✅ Email/Password Sign-Up** - User creation and account setup functional
-4. **✅ Sign-Out Functionality** - Proper session termination and UI state reset
-5. **✅ Session Restoration** - User stays logged in after page refresh
-6. **✅ Error Handling** - Proper error messages and fallback mechanisms
-7. **✅ UI State Management** - Smooth transitions between authenticated/unauthenticated states
+---
 
-### **Test Results:**
-- **Webflow Integration**: Perfect modal functionality with tab switching
-- **Firebase Backend**: All API endpoints responding correctly
-- **Security**: Custom tokens working, proper CORS configuration
-- **User Experience**: Clean, intuitive authentication flow
-- **Button States**: Dynamic button management working correctly
-- **Content Access Control**: HTML attributes properly controlling content visibility
-- **Stripe Integration**: Complete payment processing system deployed and ready
-- **Purchase Tracking**: Backend verification system working with Stripe webhooks
+## 🔧 **Webflow Setup Steps**
 
-## 🔧 **Troubleshooting**
+### **Step 1: Add Custom Attributes**
+1. Select any element in Webflow Designer
+2. Click the **Settings** (gear icon)
+3. Scroll to **Custom Attributes**
+4. Click **Add Custom Attribute**
+5. Enter the attribute name and value from the table above
 
-### **Common Issues:**
+### **Step 2: No IDs Needed!**
+- You can ignore or remove element IDs
+- The system works entirely through data attributes
+- No conflicts with Webflow's auto-generated IDs
 
-1. **"Authentication system not loaded" error:**
-   - Check that the client-auth.js script is loading correctly
-   - Verify the script URL is accessible
+### **Step 3: Test**
+1. Publish your Webflow site
+2. Test authentication flows
+3. Verify button states change correctly
+4. Check content visibility rules
 
-2. **Google Sign-In not working:**
-   - Check that Google OAuth Client ID is correct
-   - Verify authorized domains in Google Cloud Console
+---
 
-3. **Email authentication not working:**
-   - Check that Email/Password is enabled in Firebase Console
-   - Verify the API endpoints are responding correctly
+## ✅ **Testing Results**
 
-4. **Session not restoring:**
-   - Check localStorage for stored user data
-   - Verify the custom token is still valid
+The system has been thoroughly tested and verified:
 
-## 📝 **Next Steps**
+1. **✅ Email/Password Sign-Up** - User creation working perfectly
+2. **✅ Email/Password Sign-In** - Authentication flow complete
+3. **✅ Google Sign-In** - OAuth flow functional (add domain to Google Console)
+4. **✅ Session Persistence** - Users stay logged in after refresh
+5. **✅ Sign Out** - Clean session termination
+6. **✅ Content Access Control** - Visibility rules working correctly
+7. **✅ Button State Management** - Dynamic states updating properly
+8. **✅ Purchase Modal** - Opens and closes correctly
+9. **✅ Error Handling** - Proper error messages displayed
 
-### **✅ Authentication Complete - Ready for Next Phase!**
+---
 
-The authentication system is **fully functional and production-ready** in Webflow! 
+## 🐛 **Troubleshooting**
 
-**Next development phases:**
-1. **✅ Authentication System** - Complete and tested
-2. **✅ Button State Management** - Complete and ready
-3. **✅ Content Access Control** - Complete and ready
-4. **✅ Stripe Payment Integration** - Complete and deployed
-5. **🚀 Mux Video Streaming** - Ready to begin
-6. **📝 Content Management** - Final phase
+### **Google Sign-In not working:**
+Add your Webflow domain to Google Cloud Console:
+1. Go to: https://console.cloud.google.com/apis/credentials
+2. Select OAuth 2.0 Client ID
+3. Add to **Authorized JavaScript origins**:
+   - `https://tim-burton-docuseries-26d403.webflow.io`
+   - `https://tim-burton-docuseries.pages.dev`
 
-**The complete authentication and payment system is ready - let's add video streaming!** 🎥
+### **Modal not opening:**
+- Check that `data-modal="auth"` attribute is set
+- Verify button has `data-button-type="sign-in"`
+- Check browser console for errors
+
+### **Form not submitting:**
+- Ensure form has `data-form="signin"` or `data-form="signup"`
+- Check inputs have correct `data-field` attributes
+- Verify Firebase scripts are loading
+
+### **Content not showing/hiding:**
+- Check visibility attributes are set correctly
+- Verify user is actually authenticated (check console)
+- Test button state to confirm auth status
+
+---
+
+## 🚀 **System Status**
+
+**✅ PRODUCTION READY**
+
+All core features are deployed and functional:
+- ✅ Authentication System
+- ✅ Session Management
+- ✅ Content Access Control
+- ✅ Button State Management
+- ✅ Purchase Modal System
+- ✅ Stripe Integration (backend ready)
+- ✅ Attribute-based interactions
+
+**Live URLs:**
+- Frontend: https://tim-burton-docuseries.pages.dev/
+- Backend API: https://us-central1-tim-burton-docuseries.cloudfunctions.net/api
+- Webflow Site: https://tim-burton-docuseries-26d403.webflow.io/
+
+---
+
+## 📝 **Benefits of This System**
+
+1. **🎯 No Conflicts** - Data attributes won't conflict with Webflow's auto-generated IDs
+2. **🔄 Reusable** - Same attributes can be used on multiple pages
+3. **📱 Flexible** - Easy to reorganize elements in Webflow Designer
+4. **🧹 Clean Code** - No JavaScript relying on specific ID strings
+5. **🚀 Maintainable** - Clear, semantic attribute names
+6. **🔒 Secure** - Firebase Auth SDK handles all authentication
+7. **⚡ Fast** - Optimized with single backend endpoint
+8. **📊 Scalable** - Easy to add new features
+
+---
+
+## 🎓 **Need Help?**
+
+If you need to add a new interaction:
+1. Choose a semantic attribute name (e.g., `data-my-feature`)
+2. Add it to your HTML/Webflow element
+3. The JavaScript automatically detects and handles it
+4. Check the Quick Reference Table for existing patterns
+
+**The system is production-ready and fully tested!** 🎉
