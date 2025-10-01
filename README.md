@@ -1,169 +1,350 @@
 # Tim Burton Docuseries Streaming Platform
 
-A modern streaming platform for the Tim Burton docuseries, built with clean, maintainable code and integrated with Firebase, Stripe, Mux, and other services.
+A production-ready streaming platform for the Tim Burton docuseries, built with clean architecture, Firebase, Stripe, and attribute-based Webflow integration.
 
-## 🏗️ Project Structure
+## 🎯 Project Overview
 
+**Live URLs:**
+- **Webflow Site**: https://tim-burton-docuseries-26d403.webflow.io/
+- **Frontend (Cloudflare Pages)**: https://tim-burton-docuseries.pages.dev/
+- **Backend API**: https://us-central1-tim-burton-docuseries.cloudfunctions.net/api
+
+**Tech Stack:**
+- **Frontend**: Webflow + Cloudflare Pages
+- **Authentication**: Firebase Auth (Google + Email/Password)
+- **Backend**: Firebase Cloud Functions
+- **Database**: Cloud Firestore
+- **Payments**: Stripe
+- **Video**: Mux (planned)
+
+---
+
+## 📋 Documentation
+
+### **Integration Guides**
+- **[Webflow Integration](WEBFLOW_INTEGRATION.md)** - Complete Webflow setup with attribute-based system
+- **[Stripe Guide](STRIPE_GUIDE.md)** - Payment integration and setup
+- **[Firebase Guide](FIREBASE_GUIDE.md)** - Firebase setup and security
+- **[Cloudflare Deployment](CLOUDFLARE_DEPLOYMENT.md)** - Deployment instructions
+
+### **Project Planning**
+- **[Project Specification](PROJECT_SPEC.md)** - Full project requirements and features
+
+---
+
+## 🏗️ Architecture
+
+### **Clean, Attribute-Based System**
+- ✅ **No ID dependencies** - Uses `data-*` attributes for all interactions
+- ✅ **No class selectors** - Classes only for styling
+- ✅ **Webflow-friendly** - Easy integration with custom attributes
+- ✅ **Maintainable** - Clear, semantic naming conventions
+
+### **Security-First Design**
+- ✅ **Client-side auth** - Firebase Auth SDK handles all authentication
+- ✅ **Single backend endpoint** - `/auth/session` for token verification
+- ✅ **No sensitive data** - All API keys server-side only
+- ✅ **Production-ready** - Deployed and tested
+
+### **Authentication Flow**
 ```
-prototype/
-├── src/
-│   ├── js/
-│   │   ├── client-config.js     # Safe client configuration
-│   │   └── client-app.js        # Safe client application
-│   ├── html/
-│   │   └── index.html           # HTML reference for Webflow
-│   └── backend/                 # Backend API (Firebase Functions)
-│       ├── functions/
-│       │   ├── src/
-│       │   │   ├── auth.js      # Authentication endpoints
-│       │   │   ├── payments.js  # Payment processing
-│       │   │   ├── content.js   # Video content management
-│       │   │   └── users.js     # User management
-│       │   └── package.json     # Backend dependencies
-│       └── firebase.json        # Firebase configuration
-├── public/
-│   ├── images/                  # Image assets
-│   └── icons/                   # Icon assets
-├── docs/
-│   ├── setup/                   # Setup documentation
-│   ├── api/                     # API documentation
-│   └── testing/                 # Testing documentation
-├── PROJECT_SPEC.md              # Project specification
-├── BUILD_PLAN.md                # Development plan
-├── backend-api-structure.md     # Backend architecture
-├── package.json                 # Dependencies
-└── README.md                    # This file
+1. User Action (Sign In/Sign Up)
+   ↓
+2. Firebase Auth SDK (client-side)
+   ↓
+3. Get ID Token
+   ↓
+4. Sync with Backend (/auth/session)
+   ↓
+5. Fetch Purchase Status
+   ↓
+6. Update UI
 ```
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
-- Node.js (for package management)
-- Firebase CLI (`npm install -g firebase-tools`)
-- Python (for local development server)
-- Modern web browser
+## 🚀 Quick Start
 
-### Installation
+### **Prerequisites**
+- Node.js 18+
+- Firebase CLI
+- Git
 
-1. **Install dependencies:**
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone <repo-url>
+   cd tim-burton-docuseries/prototype
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Start development server:**
+3. **Set up Firebase Functions**
    ```bash
-   npm run dev
+   cd src/backend/functions
+   npm install
    ```
-   This will start a local server at `http://localhost:8000`
 
-3. **Open in browser:**
-   Navigate to `http://localhost:8000/src/html/index.html`
+4. **Configure environment variables**
+   ```bash
+   # Create .env file in src/backend/functions/
+   echo "STRIPE_SECRET_KEY=sk_test_..." > .env
+   ```
 
-## 🔧 Configuration
+5. **Deploy Firebase Functions**
+   ```bash
+   npm run deploy
+   ```
 
-### **IMPORTANT: Security Architecture**
+6. **Test locally**
+   ```bash
+   # In project root
+   python3 -m http.server 8000
+   # Open http://localhost:8000/test-server.html
+   ```
 
-This project uses a **secure client-server architecture**:
+---
 
-- **Frontend (Webflow)**: Safe client-side code with NO sensitive data
-- **Backend (Firebase Functions)**: Secure API handling all sensitive operations
-- **No API keys** are exposed in the client-side code
+## 📁 Project Structure
 
-### 1. Backend Configuration (Firebase Functions)
-All sensitive configuration is handled server-side:
+```
+prototype/
+├── public/                        # Cloudflare Pages deployment
+│   ├── js/                       # Client-side JavaScript
+│   │   ├── client-auth.js       # Firebase Auth integration
+│   │   ├── webflow-auth-handlers.js
+│   │   ├── content-access.js    # Visibility control
+│   │   ├── button-state-manager.js
+│   │   └── stripe-integration.js
+│   ├── test.html                # Test page
+│   └── index.html               # Landing page
+│
+├── src/
+│   └── backend/
+│       └── functions/           # Firebase Cloud Functions
+│           ├── src/
+│           │   ├── index.ts    # Main entry point
+│           │   ├── auth.ts     # Auth endpoints
+│           │   ├── payments.ts # Payment endpoints
+│           │   ├── stripe.ts   # Stripe integration
+│           │   ├── content.ts  # Content delivery
+│           │   └── users.ts    # User management
+│           └── package.json
+│
+├── WEBFLOW_INTEGRATION.md       # Main integration guide
+├── STRIPE_GUIDE.md             # Payment setup
+├── FIREBASE_GUIDE.md           # Firebase setup
+├── CLOUDFLARE_DEPLOYMENT.md    # Deployment guide
+├── PROJECT_SPEC.md             # Project specification
+├── firebase.json               # Firebase config
+└── README.md                   # This file
+```
 
+---
+
+## 💳 Payment System
+
+### **Purchase Options**
+- **Rental**: $14.99 - 4-day access to 4 episodes
+- **Regular**: $24.99 - Permanent access to 4 episodes
+- **Box Set**: $74.99 - 4 episodes + 40 hours of bonus content
+
+### **Features**
+- ✅ Secure Stripe Checkout
+- ✅ Webhook verification
+- ✅ Content access control
+- ✅ Purchase history
+- ✅ Rental expiration
+- ✅ Receipt downloads
+
+---
+
+## 🔐 Authentication
+
+### **Supported Methods**
+- ✅ Google Sign-In (OAuth 2.0)
+- ✅ Email/Password
+- ✅ Password Reset
+
+### **Features**
+- ✅ Session persistence
+- ✅ Token refresh
+- ✅ Secure backend sync
+- ✅ Loading states
+- ✅ Error handling
+
+---
+
+## 🎬 Content Access Control
+
+### **Visibility Attributes**
+```html
+<!-- Authentication Required -->
+<div data-auth-required="true">Authenticated content</div>
+
+<!-- Purchase Required -->
+<div data-purchase-required="true">Paid content</div>
+
+<!-- Box Set Required -->
+<div data-boxset-required="true">Box set content</div>
+
+<!-- Show for Non-Authenticated -->
+<div data-show-not-signed-in="true">Public content</div>
+
+<!-- Show for Non-Paid Users -->
+<div data-show-not-paid="true">Sign up prompt</div>
+
+<!-- Upgrade Prompt -->
+<div data-upgrade-prompt="true">Upgrade to Box Set</div>
+```
+
+---
+
+## 🔘 Button States
+
+### **Dynamic Button Management**
+```html
+<!-- Sign In/Out -->
+<button data-button-type="sign-in">Sign In</button>
+<button data-button-type="sign-out">Sign Out</button>
+
+<!-- Purchase Actions -->
+<button data-button-type="rent">Rent</button>
+<button data-button-type="buy">Buy</button>
+<button data-button-type="watch-now">Watch Now</button>
+```
+
+**Button States:**
+- **Not signed in**: Sign In + Rent + Buy
+- **Signed in, not paid**: Sign Out + Rent + Buy
+- **Signed in, paid**: Sign Out + Watch Now
+
+---
+
+## 🧪 Testing
+
+### **Test Locally**
 ```bash
-# Environment variables (backend only)
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY=your-private-key
-STRIPE_SECRET_KEY=sk_live_...
-MUX_TOKEN_ID=your-token-id
-SENDGRID_API_KEY=SG...
+# Start local server
+python3 -m http.server 8000
+
+# Test pages available:
+# - http://localhost:8000/test-server.html
+# - http://localhost:8000/public/test.html
 ```
 
-### 2. Client Configuration (Webflow)
-Only safe, public data in `src/js/client-config.js`:
+### **Test on Webflow**
+Visit: https://tim-burton-docuseries-26d403.webflow.io/
 
-```javascript
-const CLIENT_CONFIG = {
-  app: { name: "Tim Burton Docuseries" },
-  pricing: { /* public pricing info */ },
-  api: { baseUrl: "https://your-api-domain.com/api" }
-  // NO sensitive API keys here!
-}
+### **Stripe Test Cards**
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- **3D Secure**: `4000 0027 6000 3184`
+
+---
+
+## 📊 API Endpoints
+
+### **Authentication**
+- `POST /auth/session` - Verify ID token and sync user
+- (Deprecated endpoints kept for backwards compatibility)
+
+### **Payments**
+- `POST /stripe/create-checkout-session` - Create checkout
+- `POST /stripe/webhook` - Handle Stripe webhooks
+- `GET /payments/status` - Get purchase status
+
+### **Content** (Planned)
+- `POST /content/secure-url` - Get signed video URL
+- `GET /content/list` - List available content
+
+---
+
+## 🛡️ Security
+
+### **Client-Side (Safe)**
+- Firebase Web API Key (restricted)
+- Google OAuth Client ID
+- Stripe Publishable Key
+- Public configuration
+
+### **Server-Side (Secure)**
+- Firebase Admin SDK
+- Stripe Secret Key
+- Mux API Keys
+- SendGrid API Key
+- Service Account Credentials
+
+---
+
+## 🚀 Deployment
+
+### **Frontend (Cloudflare Pages)**
+- Auto-deploys on git push to main
+- URL: https://tim-burton-docuseries.pages.dev/
+
+### **Backend (Firebase Functions)**
+```bash
+cd src/backend/functions
+npm run deploy
 ```
 
-## 📋 Features
+### **Webflow**
+- JavaScript hosted on Cloudflare Pages
+- Scripts loaded via Project Settings > Custom Code
 
-### ✅ Implemented
-- **Secure Architecture**: Client-server separation for security
-- **Project Structure**: Clean, modular architecture
-- **Client-Side Code**: Safe JavaScript for Webflow integration
-- **Backend API Structure**: Firebase Functions framework
-- **HTML Reference**: Complete Webflow-ready HTML
-- **Configuration System**: Secure environment variable management
+---
 
-### 🚧 Next Steps
-- **Firebase project setup** and configuration
-- **Backend API development** (Firebase Functions)
-- **Stripe integration** with webhooks
-- **Mux video setup** and signed URLs
-- **Service integration** and testing
-- **Webflow deployment** with secure client code
+## ✅ Production Status
 
-## 🛠️ Development
+**All Core Features Deployed:**
+- ✅ Authentication System
+- ✅ Session Management  
+- ✅ Content Access Control
+- ✅ Button State Management
+- ✅ Stripe Integration
+- ✅ Attribute-based Interactions
+- ✅ Error Handling
+- ✅ Loading States
 
-### Code Standards
-- **Clean Code**: Readable, maintainable code
-- **Modular Architecture**: Separated concerns
-- **Error Handling**: Comprehensive error management
-- **Documentation**: Well-commented code
-- **Responsive Design**: Mobile-first approach
+**Next Steps:**
+- [ ] Mux video integration
+- [ ] Content management system
+- [ ] Admin dashboard
+- [ ] Analytics integration
 
-### File Organization
-- **Modules**: Separate files for each major feature
-- **Configuration**: Centralized config management
-- **Assets**: Organized public assets
-- **Documentation**: Comprehensive docs for each step
+---
 
-## 📚 Documentation
+## 🎓 Key Features
 
-- **Project Specification**: `PROJECT_SPEC.md`
-- **Build Plan**: `BUILD_PLAN.md`
-- **Setup Guides**: `docs/setup/`
-- **API Documentation**: `docs/api/`
-- **Testing Guides**: `docs/testing/`
+### **Attribute-Based System**
+- **No IDs required** - Use `data-*` attributes
+- **No conflicts** - Works with any Webflow setup
+- **Reusable** - Same attributes on multiple pages
+- **Maintainable** - Clear, semantic naming
 
-## 🔒 Security
+### **Clean Architecture**
+- **Single source of truth** - Firebase Auth
+- **One backend endpoint** - `/auth/session`
+- **Unified localStorage** - `timBurtonSession`
+- **Proper separation** - Auth → Sync → Purchase → UI
 
-- **Client-Server Separation**: No sensitive data in frontend
-- **Environment Variables**: Secure backend configuration
-- **Signed URLs**: Time-limited video access
-- **Authentication**: Firebase auth with Google Sign-In
-- **Payment Security**: Stripe secure payment processing
-- **Regional Blocking**: Cloudflare-based access control
-- **GDPR Compliance**: Privacy controls and data export
-- **API Security**: CORS protection, rate limiting, input validation
+---
 
-## 🌐 Services Integration
+## 📝 Contributing
 
-- **Firebase**: Authentication and database
-- **Stripe**: Payment processing
-- **Mux**: Video streaming
-- **SendGrid**: Email notifications
-- **Cloudflare**: Regional blocking and security
-- **Google Analytics**: Usage tracking
+Follow the established patterns:
+1. Use data attributes for interactions
+2. Keep JavaScript modular and clean
+3. Document all new features
+4. Test before deploying
+5. Update relevant guides
 
-## 📱 Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-## 🤝 Contributing
-
-This is a private project. Please follow the established code standards and document any changes.
+---
 
 ## 📄 License
 
@@ -171,8 +352,12 @@ Private project - All rights reserved.
 
 ---
 
-## 🚀 **Next Step**: Firebase Project Setup
+## 🆘 Support
 
-Ready to begin with Firebase configuration and backend API development.
+Check the documentation:
+- [Webflow Integration Guide](WEBFLOW_INTEGRATION.md)
+- [Stripe Setup Guide](STRIPE_GUIDE.md)
+- [Firebase Configuration Guide](FIREBASE_GUIDE.md)
+- [Deployment Guide](CLOUDFLARE_DEPLOYMENT.md)
 
-**Current Phase**: Service Setup Guidance
+For issues, check the troubleshooting sections in each guide.

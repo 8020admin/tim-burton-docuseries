@@ -2,17 +2,33 @@ import * as admin from 'firebase-admin';
 import * as cors from 'cors';
 import * as express from 'express';
 
-// Initialize Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  })
-});
+// Initialize Firebase Admin with default credentials
+// When deployed to Firebase, it will automatically use the correct credentials
+admin.initializeApp();
 
 const app = express();
-app.use(cors({origin: true}));
+
+// Configure CORS to allow Cloudflare Pages and Webflow domains
+const allowedOrigins = [
+  'https://tim-burton-docuseries.pages.dev',
+  'https://tim-burton-docuseries-26d403.webflow.io',
+  'http://localhost:8000', // For local testing
+  'http://localhost:8001'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 
 // Import route handlers
 import { authRoutes } from './auth';

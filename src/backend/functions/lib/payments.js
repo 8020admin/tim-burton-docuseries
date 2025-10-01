@@ -1,95 +1,176 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.paymentRoutes = void 0;
-const admin = require("firebase-admin");
 const express = require("express");
+const admin = require("firebase-admin");
+const stripe_1 = require("./stripe");
 const router = express.Router();
 exports.paymentRoutes = router;
-// Create payment intent
-router.post('/create-intent', async (req, res) => {
+// Create Stripe checkout session
+router.post('/checkout', async (req, res) => {
     try {
-        const { priceId } = req.body;
-        // This would integrate with Stripe
-        // For now, return a mock response
-        res.json({
-            success: true,
-            paymentIntent: {
-                id: 'pi_mock_' + Date.now(),
-                clientSecret: 'pi_mock_client_secret',
-                status: 'requires_payment_method'
-            }
-        });
+        const { userId, productType, successUrl, cancelUrl } = req.body;
+        if (!userId || !productType || !successUrl || !cancelUrl) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameters'
+            });
+        }
+        if (!['rental', 'regular', 'boxset'].includes(productType)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid product type'
+            });
+        }
+        const result = await (0, stripe_1.createCheckoutSession)(userId, productType, successUrl, cancelUrl);
+        if (result.success) {
+            res.json(result);
+        }
+        else {
+            res.status(400).json(result);
+        }
     }
     catch (error) {
-        console.error('Payment intent creation error:', error);
-        res.status(400).json({
+        console.error('Checkout session creation error:', error);
+        res.status(500).json({
             success: false,
-            error: 'Payment intent creation failed'
+            error: 'Failed to create checkout session'
         });
     }
 });
-// Confirm payment
-router.post('/confirm', async (req, res) => {
+// Get user's purchase status
+router.get('/status', async (req, res) => {
     try {
-        const { paymentIntentId } = req.body;
-        // This would confirm the payment with Stripe
-        // For now, return a mock success response
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                success: false,
+                error: 'Missing or invalid authorization header'
+            });
+        }
+        const token = authHeader.split(' ')[1];
+        // Verify the custom token
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const userId = decodedToken.uid;
+        const purchaseStatus = await (0, stripe_1.getUserPurchaseStatus)(userId);
         res.json({
             success: true,
-            payment: {
-                id: paymentIntentId,
-                status: 'succeeded',
-                amount: 1499,
-                currency: 'usd'
-            }
+            purchaseStatus: purchaseStatus
         });
     }
     catch (error) {
-        console.error('Payment confirmation error:', error);
-        res.status(400).json({
+        console.error('Purchase status error:', error);
+        res.status(500).json({
             success: false,
-            error: 'Payment confirmation failed'
+            error: 'Failed to get purchase status'
         });
     }
 });
-// Get payment history
-router.get('/history/:userId', async (req, res) => {
+// Stripe webhook handler
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
-        const { userId } = req.params;
-        // Get payment history from Firestore
-        const payments = await admin.firestore()
-            .collection('payments')
+        const signature = req.headers['stripe-signature'];
+        const payload = req.body;
+        // Verify webhook signature
+        if (!(0, stripe_1.verifyWebhookSignature)(payload, signature)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid webhook signature'
+            });
+        }
+        // Parse the webhook event
+        const event = JSON.parse(payload.toString());
+        // Handle the event
+        switch (event.type) {
+            case 'checkout.session.completed':
+                const session = event.data.object;
+                const result = await (0, stripe_1.handleSuccessfulPayment)(session.id);
+                if (result.success) {
+                    console.log('Payment processed successfully:', result.purchase);
+                }
+                else {
+                    console.error('Payment processing failed:', result.error);
+                }
+                break;
+            case 'payment_intent.succeeded':
+                console.log('Payment intent succeeded:', event.data.object.id);
+                break;
+            case 'payment_intent.payment_failed':
+                console.log('Payment intent failed:', event.data.object.id);
+                break;
+            default:
+                console.log('Unhandled event type:', event.type);
+        }
+        res.json({ received: true });
+    }
+    catch (error) {
+        console.error('Webhook error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Webhook processing failed'
+        });
+    }
+});
+// Get purchase history
+router.get('/history', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                success: false,
+                error: 'Missing or invalid authorization header'
+            });
+        }
+        const token = authHeader.split(' ')[1];
+        // Verify the custom token
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const userId = decodedToken.uid;
+        // Get purchase history from Firestore
+        const purchases = await admin.firestore()
+            .collection('purchases')
             .where('userId', '==', userId)
             .orderBy('createdAt', 'desc')
             .get();
-        const paymentList = payments.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
+        const purchaseList = purchases.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
         res.json({
             success: true,
-            payments: paymentList
+            purchases: purchaseList
         });
     }
     catch (error) {
-        console.error('Payment history error:', error);
-        res.status(400).json({
+        console.error('Purchase history error:', error);
+        res.status(500).json({
             success: false,
-            error: 'Failed to get payment history'
+            error: 'Failed to get purchase history'
         });
     }
 });
 // Get receipt URL
-router.get('/receipt/:paymentId', async (req, res) => {
+router.get('/receipt/:purchaseId', async (req, res) => {
     try {
-        const { paymentId } = req.params;
-        // This would generate a receipt URL from Stripe
-        // For now, return a mock URL
+        const { purchaseId } = req.params;
+        // Get purchase record
+        const purchaseDoc = await admin.firestore()
+            .collection('purchases')
+            .doc(purchaseId)
+            .get();
+        if (!purchaseDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                error: 'Purchase not found'
+            });
+        }
+        const purchase = purchaseDoc.data();
+        // Generate Stripe receipt URL
+        const receiptUrl = `https://pay.stripe.com/receipts/${purchase === null || purchase === void 0 ? void 0 : purchase.stripeSessionId}`;
         res.json({
             success: true,
-            receiptUrl: `https://pay.stripe.com/receipts/${paymentId}`
+            receiptUrl: receiptUrl
         });
     }
     catch (error) {
         console.error('Receipt URL error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             error: 'Failed to get receipt URL'
         });
