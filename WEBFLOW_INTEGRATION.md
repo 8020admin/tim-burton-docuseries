@@ -415,7 +415,10 @@ For custom success messages:
 
 Here's a complete authentication modal with all attributes:
 
+> **Important:** The modal should have `style="display: none;"` by default. The JavaScript will change this to `display: flex` to show it centered on the page.
+
 ```html
+<!-- Auth Modal: Fixed overlay with centered content -->
 <div data-modal="auth" style="display: none;">
   <div class="modal-content">
     <!-- Header -->
@@ -479,17 +482,23 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 ```css
 <style>
 /* Auth Modal */
-.auth-modal {
+[data-modal="auth"] {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+/* Show modal when opened by JS */
+[data-modal="auth"][style*="display: flex"],
+[data-modal="auth"][style*="display:flex"] {
+  display: flex !important;
 }
 
 .modal-content {
@@ -497,8 +506,11 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   padding: 30px;
   border-radius: 10px;
   width: 90%;
-  max-width: 400px;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -629,10 +641,28 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
+  display: none; /* Hidden by default */
   justify-content: center;
   align-items: center;
   z-index: 1001;
+}
+
+/* Show modal when opened by JS */
+[data-modal="purchase"][style*="display: flex"],
+[data-modal="purchase"][style*="display:flex"] {
+  display: flex !important;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .purchase-options {
@@ -675,9 +705,40 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    padding: 20px;
+  }
+  
   .purchase-options {
     grid-template-columns: 1fr;
   }
+}
+
+/* Accessibility: Focus trap for modals */
+[data-modal] {
+  outline: none;
+}
+
+/* Close button hover state */
+[data-modal-action="close"]:hover {
+  opacity: 0.7;
+}
+
+/* Smooth transitions */
+[data-modal] {
+  transition: opacity 0.2s ease-in-out;
+}
+
+[data-modal][style*="display: none"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-modal][style*="display: flex"] {
+  opacity: 1;
+  pointer-events: auto;
 }
 </style>
 ```
@@ -767,6 +828,32 @@ The system has been thoroughly tested and verified:
 ---
 
 ## 🐛 **Troubleshooting**
+
+### **Modal appearing at bottom of page instead of centered:**
+
+**Problem:** The modal shows at the bottom of the page, not as an overlay.
+
+**Solution:**
+1. Ensure the modal has `data-modal="auth"` attribute (not a class)
+2. Set inline style: `style="display: none;"`
+3. Add the CSS from this guide to Webflow **Custom Code > Head Code**
+4. The modal should NOT have any position settings in Webflow Designer
+5. Remove any Webflow layout classes that might conflict (like flex/grid on the modal itself)
+
+**CSS Check:**
+```css
+[data-modal="auth"] {
+  position: fixed;  /* Must be fixed */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;  /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+```
 
 ### **Google Sign-In not working:**
 Add your Webflow domain to Google Cloud Console:
