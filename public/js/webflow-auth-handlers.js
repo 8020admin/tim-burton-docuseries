@@ -195,6 +195,12 @@ async function handleEmailSignUp(e) {
 function handlePasswordReset(e) {
   e.preventDefault();
   
+  // Hide auth modal first
+  const authModal = document.querySelector('[data-modal="auth"]');
+  if (authModal) {
+    authModal.style.display = 'none';
+  }
+  
   // Show password recovery modal
   const modal = document.querySelector('[data-modal="password-recovery"]');
   if (modal) {
@@ -389,6 +395,25 @@ function initializeAuthHandlers() {
       }
       // Show auth modal on sign-in tab
       showAuthModal('signin');
+    });
+  });
+  
+  // Close modal buttons - handle both data-action="close-modal" and data-modal-action="close"
+  const closeModalButtons = document.querySelectorAll('[data-action="close-modal"], [data-modal-action="close"]');
+  closeModalButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Find the closest modal and close it
+      const modal = button.closest('[data-modal]');
+      if (modal) {
+        modal.style.display = 'none';
+        
+        // If closing password recovery modal, show auth modal
+        if (modal.getAttribute('data-modal') === 'password-recovery') {
+          showAuthModal('signin');
+        }
+      }
     });
   });
   
