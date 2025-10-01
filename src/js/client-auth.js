@@ -357,7 +357,7 @@ class TimBurtonAuth {
     }
 
     try {
-      const response = await fetch(`${this.apiBaseUrl}/purchases/status`, {
+      const response = await fetch(`${this.apiBaseUrl}/payments/status`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
