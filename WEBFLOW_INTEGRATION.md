@@ -288,6 +288,50 @@ Create a div for the Google button:
 </button>
 ```
 
+### **Complete Purchase Modal Example**
+Here's a complete purchase modal with all attributes:
+
+```html
+<!-- Purchase Modal: Fixed overlay with centered content -->
+<div data-modal="purchase" style="display: none;">
+  <div class="modal-content">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2>Choose Your Purchase</h2>
+      <button data-modal-action="close">×</button>
+    </div>
+    
+    <!-- Purchase Options -->
+    <div class="purchase-options">
+      <!-- Regular Purchase Option -->
+      <div class="purchase-option">
+        <h3>Regular Access</h3>
+        <p>Watch the complete docuseries</p>
+        <div class="price">$24.99</div>
+        <button data-purchase-type="regular">
+          Purchase Now
+        </button>
+      </div>
+      
+      <!-- Box Set Purchase Option -->
+      <div class="purchase-option">
+        <h3>Box Set</h3>
+        <p>Complete series + exclusive extras</p>
+        <div class="price">$74.99</div>
+        <button data-purchase-type="boxset">
+          Purchase Box Set
+        </button>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="modal-footer">
+      <p>Secure payment powered by Stripe</p>
+    </div>
+  </div>
+</div>
+```
+
 ---
 
 ## 🔘 **6. Interactive Buttons**
