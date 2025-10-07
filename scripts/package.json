@@ -1,0 +1,17 @@
+{
+  "name": "tim-burton-stripe-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for managing Stripe products and prices",
+  "main": "get-price-ids.js",
+  "scripts": {
+    "get-prices": "node get-price-ids.js",
+    "setup-products": "node setup-stripe-products.js"
+  },
+  "dependencies": {
+    "stripe": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

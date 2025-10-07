@@ -1098,7 +1098,7 @@ Add your Webflow domain to Google Cloud Console:
 1. Go to: https://console.cloud.google.com/apis/credentials
 2. Select OAuth 2.0 Client ID
 3. Add to **Authorized JavaScript origins**:
-   - `https://tim-burton-docuseries-26d403.webflow.io`
+   - `https://timburton-dev.webflow.io`
    - `https://tim-burton-docuseries.pages.dev`
 
 ### **Modal not opening:**
@@ -1134,7 +1134,7 @@ All core features are deployed and functional:
 **Live URLs:**
 - Frontend: https://tim-burton-docuseries.pages.dev/
 - Backend API: https://us-central1-tim-burton-docuseries.cloudfunctions.net/api
-- Webflow Site: https://tim-burton-docuseries-26d403.webflow.io/
+- Webflow Site: https://timburton-dev.webflow.io/
 
 ---
 

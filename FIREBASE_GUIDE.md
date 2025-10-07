@@ -59,13 +59,13 @@ const firebaseConfig = {
 4. Find **OAuth 2.0 Client ID** (auto-created by Firebase)
 5. Add **Authorized JavaScript origins**:
    ```
-   https://tim-burton-docuseries-26d403.webflow.io
+   https://timburton-dev.webflow.io
    https://tim-burton-docuseries.pages.dev
    http://localhost:8000
    ```
 6. Add **Authorized redirect URIs**:
    ```
-   https://tim-burton-docuseries-26d403.webflow.io
+   https://timburton-dev.webflow.io
    https://tim-burton-docuseries.pages.dev
    ```
 
@@ -192,7 +192,7 @@ Update `src/backend/functions/src/index.ts`:
 ```typescript
 const allowedOrigins = [
   'https://tim-burton-docuseries.pages.dev',
-  'https://tim-burton-docuseries-26d403.webflow.io',
+  'https://timburton-dev.webflow.io',
   'http://localhost:8000',
   'http://localhost:8001'
 ];

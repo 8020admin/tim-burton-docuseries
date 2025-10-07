@@ -5,7 +5,7 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 ## 🎯 Project Overview
 
 **Live URLs:**
-- **Webflow Site**: https://tim-burton-docuseries-26d403.webflow.io/
+- **Webflow Site**: https://timburton-dev.webflow.io/
 - **Frontend (Cloudflare Pages)**: https://tim-burton-docuseries.pages.dev/
 - **Backend API**: https://us-central1-tim-burton-docuseries.cloudfunctions.net/api
 
@@ -29,6 +29,7 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 
 ### **Project Planning**
 - **[Project Specification](PROJECT_SPEC.md)** - Full project requirements and features
+- **[Production Status](PRODUCTION_STATUS.md)** - Current system status and deployment info
 
 ---
 
@@ -252,7 +253,7 @@ python3 -m http.server 8000
 ```
 
 ### **Test on Webflow**
-Visit: https://tim-burton-docuseries-26d403.webflow.io/
+Visit: https://timburton-dev.webflow.io/
 
 ### **Stripe Test Cards**
 - **Success**: `4242 4242 4242 4242`
@@ -316,14 +317,16 @@ npm run deploy
 ## ✅ Production Status
 
 **All Core Features Deployed:**
-- ✅ Authentication System
-- ✅ Session Management  
-- ✅ Content Access Control
-- ✅ Button State Management
-- ✅ Stripe Integration
+- ✅ Authentication System (Google + Email/Password)
+- ✅ Session Management & Persistence
+- ✅ Content Access Control (Attribute-based)
+- ✅ Button State Management (Buy/Watch Now)
+- ✅ Stripe Integration (Checkout + Webhooks)
+- ✅ Customer Management (Proper Stripe Customers)
+- ✅ Purchase Processing (End-to-end)
 - ✅ Attribute-based Interactions
-- ✅ Error Handling
-- ✅ Loading States
+- ✅ Error Handling & Loading States
+- ✅ User Profile Management (firstName, lastName, photoURL)
 
 **Next Steps:**
 - [ ] Mux video integration

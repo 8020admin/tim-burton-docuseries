@@ -27,6 +27,7 @@ class TimBurtonAuth {
     this.idToken = null;
     this.purchaseStatus = null;
     this.isInitialized = false;
+    this.pendingUserData = null; // Temporary storage for signup data
     
     // Initialize
     this.initFirebase();
@@ -143,7 +144,11 @@ class TimBurtonAuth {
       this.idToken = await firebaseUser.getIdToken(true);
       
       // Sync with backend (creates/updates user in Firestore)
-      await this.syncSession(this.idToken);
+      // Pass pendingUserData if this is a new signup
+      await this.syncSession(this.idToken, this.pendingUserData);
+      
+      // Clear pending user data after sync
+      this.pendingUserData = null;
       
       // Fetch purchase status
       await this.fetchPurchaseStatus();
@@ -224,6 +229,12 @@ class TimBurtonAuth {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
       }
+      
+      // Store user data to pass to backend during session sync
+      this.pendingUserData = {
+        firstName: firstName || '',
+        lastName: ''
+      };
       
       const userCredential = await this.firebaseAuth.createUserWithEmailAndPassword(email, password);
       
@@ -331,12 +342,20 @@ class TimBurtonAuth {
    * Sync session with backend
    * This is the ONLY backend endpoint for authentication
    */
-  async syncSession(idToken) {
+  async syncSession(idToken, userData = null) {
     try {
+      const payload = { idToken };
+      
+      // Include user data if provided (for new signups)
+      if (userData) {
+        payload.firstName = userData.firstName;
+        payload.lastName = userData.lastName;
+      }
+      
       const response = await fetch(`${this.apiBaseUrl}/auth/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken })
+        body: JSON.stringify(payload)
       });
       
       if (!response.ok) {

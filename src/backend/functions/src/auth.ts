@@ -46,7 +46,7 @@ function parseDisplayName(displayName: string | null | undefined): { firstName: 
  */
 router.post('/session', async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, firstName: providedFirstName, lastName: providedLastName } = req.body;
     
     if (!idToken) {
       return res.status(400).json({
@@ -63,8 +63,22 @@ router.post('/session', async (req, res) => {
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
     
     if (!userDoc.exists) {
-      // Parse display name into firstName and lastName
-      const { firstName, lastName } = parseDisplayName(decodedToken.name);
+      // Use provided names if available, otherwise parse from token
+      let firstName: string;
+      let lastName: string;
+      
+      if (providedFirstName) {
+        // Use explicitly provided names (from signup form)
+        firstName = providedFirstName;
+        lastName = providedLastName || '';
+      } else {
+        // Fall back to parsing displayName from token (Google Sign-In)
+        const parsed = parseDisplayName(decodedToken.name);
+        firstName = parsed.firstName;
+        lastName = parsed.lastName;
+      }
+      
+      const displayName = `${firstName} ${lastName}`.trim() || decodedToken.email?.split('@')[0] || 'User';
       
       // Create new user document with enhanced profile data
       const newUser = {
@@ -72,7 +86,7 @@ router.post('/session', async (req, res) => {
         email: decodedToken.email,
         firstName: firstName,
         lastName: lastName,
-        displayName: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
+        displayName: displayName,
         photoURL: decodedToken.picture || getRandomProfilePicture(),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastLoginAt: admin.firestore.FieldValue.serverTimestamp()

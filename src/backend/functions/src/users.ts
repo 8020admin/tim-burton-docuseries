@@ -88,8 +88,8 @@ router.post('/export-data', async (req, res) => {
     
     // Get all user data
     const userDoc = await admin.firestore().collection('users').doc(userId).get();
-    const payments = await admin.firestore()
-      .collection('payments')
+    const purchases = await admin.firestore()
+      .collection('purchases')
       .where('userId', '==', userId)
       .get();
     const progress = await admin.firestore()
@@ -99,7 +99,7 @@ router.post('/export-data', async (req, res) => {
     
     const exportData = {
       user: userDoc.data(),
-      payments: payments.docs.map(doc => doc.data()),
+      purchases: purchases.docs.map(doc => doc.data()),
       watchProgress: progress.docs.map(doc => doc.data()),
       exportedAt: new Date().toISOString()
     };
@@ -133,14 +133,14 @@ router.delete('/account', async (req, res) => {
     // Delete user data from Firestore
     await admin.firestore().collection('users').doc(userId).delete();
     
-    // Delete payments (or anonymize)
-    const payments = await admin.firestore()
-      .collection('payments')
+    // Delete purchases
+    const purchases = await admin.firestore()
+      .collection('purchases')
       .where('userId', '==', userId)
       .get();
     
-    for (const payment of payments.docs) {
-      await payment.ref.delete();
+    for (const purchase of purchases.docs) {
+      await purchase.ref.delete();
     }
     
     // Delete watch progress

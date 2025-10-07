@@ -26,6 +26,42 @@ class StripeIntegration {
   }
 
   /**
+   * Validate if user can purchase a product
+   */
+  async validatePurchase(userId, productType) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/payments/validate-purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          productType
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        return {
+          allowed: result.allowed,
+          reason: result.reason
+        };
+      } else {
+        throw new Error(result.error || 'Failed to validate purchase');
+      }
+    } catch (error) {
+      console.error('Purchase validation error:', error);
+      // On error, default to allowing purchase to avoid blocking legitimate users
+      return {
+        allowed: true,
+        reason: null
+      };
+    }
+  }
+
+  /**
    * Create checkout session for rental
    */
   async createRentalCheckout() {
@@ -34,7 +70,16 @@ class StripeIntegration {
     }
 
     const userId = this.auth.getCurrentUser().uid;
-    const successUrl = `${window.location.origin}/watch?purchase=success`;
+    
+    // Validate purchase before checkout
+    const validation = await this.validatePurchase(userId, 'rental');
+    
+    if (!validation.allowed) {
+      this.showErrorMessage(validation.reason || 'You cannot purchase this product at this time.');
+      throw new Error(validation.reason);
+    }
+
+    const successUrl = `${window.location.origin}/episodes?purchase=success`;
     const cancelUrl = `${window.location.origin}?purchase=cancelled`;
 
     return await this.createCheckoutSession(userId, 'rental', successUrl, cancelUrl);
@@ -49,7 +94,16 @@ class StripeIntegration {
     }
 
     const userId = this.auth.getCurrentUser().uid;
-    const successUrl = `${window.location.origin}/watch?purchase=success`;
+    
+    // Validate purchase before checkout
+    const validation = await this.validatePurchase(userId, 'regular');
+    
+    if (!validation.allowed) {
+      this.showErrorMessage(validation.reason || 'You cannot purchase this product at this time.');
+      throw new Error(validation.reason);
+    }
+
+    const successUrl = `${window.location.origin}/episodes?purchase=success`;
     const cancelUrl = `${window.location.origin}?purchase=cancelled`;
 
     return await this.createCheckoutSession(userId, 'regular', successUrl, cancelUrl);
@@ -64,7 +118,16 @@ class StripeIntegration {
     }
 
     const userId = this.auth.getCurrentUser().uid;
-    const successUrl = `${window.location.origin}/watch?purchase=success`;
+    
+    // Validate purchase before checkout
+    const validation = await this.validatePurchase(userId, 'boxset');
+    
+    if (!validation.allowed) {
+      this.showErrorMessage(validation.reason || 'You cannot purchase this product at this time.');
+      throw new Error(validation.reason);
+    }
+
+    const successUrl = `${window.location.origin}/episodes?purchase=success`;
     const cancelUrl = `${window.location.origin}?purchase=cancelled`;
 
     return await this.createCheckoutSession(userId, 'boxset', successUrl, cancelUrl);
@@ -120,7 +183,7 @@ class StripeIntegration {
       
       // Redirect to overview page after a short delay
       setTimeout(() => {
-        window.location.href = '/watch';
+        window.location.href = '/episodes';
       }, 2000);
 
     } catch (error) {

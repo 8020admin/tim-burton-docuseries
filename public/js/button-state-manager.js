@@ -67,8 +67,17 @@ class ButtonStateManager {
    * Update Sign In/Sign Out buttons
    */
   updateSignInButtons(buttonState) {
-    const signInButtons = document.querySelectorAll('[data-button-type="sign-in"]');
-    const signOutButtons = document.querySelectorAll('[data-button-type="sign-out"]');
+    // Try to find buttons by data attributes first
+    let signInButtons = document.querySelectorAll('[data-button-type="sign-in"]');
+    let signOutButtons = document.querySelectorAll('[data-button-type="sign-out"]');
+    
+    // Fallback: find buttons by text content if data attributes not found
+    if (signInButtons.length === 0) {
+      signInButtons = this.findButtonsByText(['Sign In', 'Sign in', 'Log In', 'Log in']);
+    }
+    if (signOutButtons.length === 0) {
+      signOutButtons = this.findButtonsByText(['Sign Out', 'Sign out', 'Log Out', 'Log out']);
+    }
     
     if (buttonState === 'not-signed-in') {
       // Show Sign In buttons, hide Sign Out buttons
@@ -95,19 +104,37 @@ class ButtonStateManager {
    * Update Rent/Buy/Watch Now buttons
    */
   updatePurchaseButtons(buttonState) {
-    const rentButtons = document.querySelectorAll('[data-button-type="rent"]');
-    const buyButtons = document.querySelectorAll('[data-button-type="buy"]');
-    const watchNowButtons = document.querySelectorAll('[data-button-type="watch-now"]');
+    // Try to find buttons by data attributes first
+    let rentButtons = document.querySelectorAll('[data-button-type="rent"]');
+    let buyButtons = document.querySelectorAll('[data-button-type="buy"]');
+    let watchNowButtons = document.querySelectorAll('[data-button-type="watch-now"]');
+    
+    // Fallback: find buttons by text content if data attributes not found
+    if (rentButtons.length === 0) {
+      rentButtons = this.findButtonsByText(['Rent', 'Rent now']);
+    }
+    if (buyButtons.length === 0) {
+      buyButtons = this.findButtonsByText(['Buy', 'Buy now']);
+    }
+    if (watchNowButtons.length === 0) {
+      watchNowButtons = this.findButtonsByText(['Watch now', 'Watch Now']);
+    }
     
     if (buttonState === 'not-signed-in') {
       // Show Rent and Buy buttons, hide Watch Now
       rentButtons.forEach(button => {
         button.style.display = '';
         button.textContent = 'Rent';
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
       });
       buyButtons.forEach(button => {
         button.style.display = '';
         button.textContent = 'Buy';
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
       });
       watchNowButtons.forEach(button => {
         button.style.display = 'none';
@@ -117,27 +144,110 @@ class ButtonStateManager {
       rentButtons.forEach(button => {
         button.style.display = '';
         button.textContent = 'Rent';
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
       });
       buyButtons.forEach(button => {
         button.style.display = '';
         button.textContent = 'Buy';
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
       });
       watchNowButtons.forEach(button => {
         button.style.display = 'none';
       });
     } else if (buttonState === 'signed-in-paid') {
-      // Hide Rent and Buy buttons, show Watch Now
-      rentButtons.forEach(button => {
-        button.style.display = 'none';
-      });
-      buyButtons.forEach(button => {
-        button.style.display = 'none';
-      });
-      watchNowButtons.forEach(button => {
-        button.style.display = '';
-        button.textContent = 'Watch Now';
-      });
+      // Get purchase status to determine which buttons to show
+      const purchaseStatus = this.auth.getPurchaseStatus();
+      const purchaseType = purchaseStatus?.type;
+      
+      if (purchaseType === 'boxset') {
+        // Box Set owners: Hide rent, show "Already Owned" on buy, show Watch Now
+        rentButtons.forEach(button => {
+          button.style.display = 'none';
+        });
+        buyButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Already Owned';
+          button.disabled = true;
+          button.style.opacity = '0.6';
+          button.style.cursor = 'not-allowed';
+        });
+        watchNowButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Watch Now';
+        });
+      } else if (purchaseType === 'regular') {
+        // Regular owners: Hide rent, show "Upgrade to Box Set" on buy, show Watch Now
+        rentButtons.forEach(button => {
+          button.style.display = 'none';
+        });
+        buyButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Upgrade to Box Set';
+          button.disabled = false;
+          button.style.opacity = '1';
+          button.style.cursor = 'pointer';
+          // Add attribute to indicate this is an upgrade
+          button.setAttribute('data-purchase-upgrade', 'boxset');
+        });
+        watchNowButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Watch Now';
+        });
+      } else if (purchaseType === 'rental') {
+        // Active Rental: Show "Upgrade" on both rent and buy, show Watch Now
+        rentButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Already Rented';
+          button.disabled = true;
+          button.style.opacity = '0.6';
+          button.style.cursor = 'not-allowed';
+        });
+        buyButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Buy to Keep Forever';
+          button.disabled = false;
+          button.style.opacity = '1';
+          button.style.cursor = 'pointer';
+        });
+        watchNowButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Watch Now';
+        });
+      } else {
+        // Default paid state: Hide Rent and Buy, show Watch Now
+        rentButtons.forEach(button => {
+          button.style.display = 'none';
+        });
+        buyButtons.forEach(button => {
+          button.style.display = 'none';
+        });
+        watchNowButtons.forEach(button => {
+          button.style.display = '';
+          button.textContent = 'Watch Now';
+        });
+      }
     }
+  }
+
+  /**
+   * Find buttons by text content (fallback method)
+   */
+  findButtonsByText(textVariations) {
+    const buttons = [];
+    const allButtons = document.querySelectorAll('button, a[href="#"], [role="button"]');
+    
+    allButtons.forEach(button => {
+      const buttonText = button.textContent.trim();
+      if (textVariations.some(text => buttonText === text)) {
+        buttons.push(button);
+      }
+    });
+    
+    return buttons;
   }
 
   /**
@@ -176,7 +286,7 @@ class ButtonStateManager {
         this.handleRentClick();
         break;
       case 'buy':
-        this.handleBuyClick();
+        this.handleBuyClick(button); // Pass button element for upgrade logic
         break;
       case 'watch-now':
         this.handleWatchNowClick();
@@ -220,14 +330,22 @@ class ButtonStateManager {
   /**
    * Handle Buy button click
    */
-  handleBuyClick() {
+  handleBuyClick(button) {
     if (!this.auth || !this.auth.isSignedIn()) {
       // Set intended action and open authentication modal in Sign Up state
       this.intendedAction = 'buy';
       this.openAuthModal('signup');
     } else {
-      // User is signed in, show purchase options modal
-      this.showPurchaseOptions();
+      // Check if this is an upgrade to Box Set
+      const upgradeType = button?.getAttribute?.('data-purchase-upgrade');
+      
+      if (upgradeType === 'boxset') {
+        // Direct upgrade to Box Set
+        this.initiateBoxSetPurchase();
+      } else {
+        // User is signed in, show purchase options modal
+        this.showPurchaseOptions();
+      }
     }
   }
 
@@ -236,7 +354,7 @@ class ButtonStateManager {
    */
   handleWatchNowClick() {
     // Redirect to overview page
-    window.location.href = '/watch';
+    window.location.href = '/episodes';
   }
 
   /**

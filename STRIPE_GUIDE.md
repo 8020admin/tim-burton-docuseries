@@ -19,7 +19,11 @@ Complete Stripe payment integration for the Tim Burton Docuseries streaming plat
 - ✅ Content Access Control (backend-verified)
 - ✅ Purchase History & Receipt Downloads
 - ✅ Rental Expiration (automatic after 4 days)
+- ✅ Duplicate Purchase Prevention (multi-layered validation)
 - ✅ Comprehensive Error Handling
+- ✅ Proper Customer Management (No more "Guest" customers)
+- ✅ End-to-end Purchase Processing
+- ✅ UI State Updates (Buy → Watch Now, Already Owned, Upgrade)
 
 ---
 
@@ -278,6 +282,25 @@ npm run deploy
 3. Test with real payment (small amount)
 4. Monitor Cloud Functions logs
 5. Verify Firestore updates
+
+---
+
+## 🛡️ Duplicate Purchase Prevention
+
+**Automatically prevents customers from buying the same product twice.**
+
+**Rules:**
+- Box Set owners: Cannot buy anything (already have everything)
+- Regular owners: Can only upgrade to Box Set
+- Active Rental: Can upgrade to Regular or Box Set (no duplicate rentals)
+- Expired Rental: Can buy anything
+
+**Implementation:**
+- ✅ Client-side validation (better UX, instant feedback)
+- ✅ Server-side validation (security, cannot be bypassed)
+- ✅ Smart UI states (buttons show "Already Owned", "Upgrade to Box Set", etc.)
+
+**Endpoint:** `POST /api/payments/validate-purchase`
 
 ---
 
