@@ -93,6 +93,7 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <script src="https://tim-burton-docuseries.pages.dev/js/content-access.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/button-state-manager.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/stripe-integration.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/user-profile.js"></script>
 ```
 
 ---
