@@ -1,0 +1,310 @@
+/**
+ * Mux Integration for Tim Burton Docuseries
+ * Handles video streaming, signed URLs, and content delivery
+ */
+
+import Mux from '@mux/mux-node';
+import * as admin from 'firebase-admin';
+
+// Initialize Mux client
+let muxClient: Mux | null = null;
+
+/**
+ * Get or initialize Mux client
+ */
+function getMuxClient(): Mux {
+  if (!muxClient) {
+    const tokenId = process.env.MUX_TOKEN_ID;
+    const tokenSecret = process.env.MUX_TOKEN_SECRET;
+
+    if (!tokenId || !tokenSecret) {
+      throw new Error('Mux credentials not configured. Please set MUX_TOKEN_ID and MUX_TOKEN_SECRET environment variables.');
+    }
+
+    // Initialize Mux client with authentication
+    muxClient = new Mux(tokenId, tokenSecret);
+
+    console.log('✅ Mux client initialized');
+  }
+
+  return muxClient;
+}
+
+/**
+ * Generate signed playback URL for a video
+ * This creates a time-limited, secure URL that can only be used by the intended user
+ */
+export async function generateSignedPlaybackUrl(
+  playbackId: string,
+  userId: string,
+  expiresIn: number = 86400 // 24 hours in seconds
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const signingKeyId = process.env.MUX_SIGNING_KEY_ID;
+    const signingKeyPrivate = process.env.MUX_SIGNING_KEY_PRIVATE;
+
+    if (!signingKeyId || !signingKeyPrivate) {
+      throw new Error('Mux signing keys not configured. Please set MUX_SIGNING_KEY_ID and MUX_SIGNING_KEY_PRIVATE.');
+    }
+
+    // Import JWT library for signing
+    const jwt = require('jsonwebtoken');
+
+    // Create expiration timestamp
+    const exp = Math.floor(Date.now() / 1000) + expiresIn;
+
+    // Create JWT payload
+    const payload = {
+      sub: playbackId,
+      aud: 'v', // 'v' for video playback
+      exp: exp,
+      kid: signingKeyId,
+      // Optional: Add custom claims
+      metadata: {
+        userId: userId,
+        timestamp: Date.now()
+      }
+    };
+
+    // Sign the token
+    const token = jwt.sign(payload, signingKeyPrivate, {
+      algorithm: 'RS256',
+      keyid: signingKeyId
+    });
+
+    // Construct the signed URL
+    const signedUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
+
+    console.log(`✅ Generated signed URL for playback ID: ${playbackId}, user: ${userId}`);
+
+    return {
+      success: true,
+      url: signedUrl
+    };
+
+  } catch (error) {
+    console.error('❌ Error generating signed URL:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate signed URL'
+    };
+  }
+}
+
+/**
+ * Get video asset information from Mux
+ */
+export async function getVideoAsset(assetId: string) {
+  try {
+    const mux = getMuxClient();
+    const asset = await mux.Video.Assets.get(assetId);
+
+    return {
+      success: true,
+      asset: {
+        id: asset.id,
+        status: asset.status,
+        duration: asset.duration,
+        playbackIds: asset.playback_ids,
+        createdAt: asset.created_at
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ Error fetching video asset:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch video asset'
+    };
+  }
+}
+
+/**
+ * Check if user has access to specific content
+ */
+export async function checkContentAccess(
+  userId: string,
+  contentType: 'episode' | 'extra'
+): Promise<{ hasAccess: boolean; purchaseType: string | null; reason?: string }> {
+  try {
+    // Get user's purchase status
+    const purchases = await admin.firestore()
+      .collection('purchases')
+      .where('userId', '==', userId)
+      .where('status', '==', 'completed')
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (purchases.empty) {
+      return {
+        hasAccess: false,
+        purchaseType: null,
+        reason: 'No active purchase found'
+      };
+    }
+
+    const purchase = purchases.docs[0].data();
+    const productType = purchase.productType;
+
+    // Check rental expiration
+    if (productType === 'rental' && purchase.expiresAt) {
+      const expiresAt = purchase.expiresAt.toDate();
+      const now = new Date();
+
+      if (now > expiresAt) {
+        return {
+          hasAccess: false,
+          purchaseType: 'expired',
+          reason: 'Rental has expired'
+        };
+      }
+    }
+
+    // Access rules:
+    // - Episodes: rental, regular, boxset
+    // - Extras: boxset only
+    if (contentType === 'episode') {
+      return {
+        hasAccess: ['rental', 'regular', 'boxset'].includes(productType),
+        purchaseType: productType
+      };
+    } else if (contentType === 'extra') {
+      return {
+        hasAccess: productType === 'boxset',
+        purchaseType: productType,
+        reason: productType !== 'boxset' ? 'Extras require Box Set purchase' : undefined
+      };
+    }
+
+    return {
+      hasAccess: false,
+      purchaseType: productType,
+      reason: 'Unknown content type'
+    };
+
+  } catch (error) {
+    console.error('❌ Error checking content access:', error);
+    return {
+      hasAccess: false,
+      purchaseType: null,
+      reason: 'Error checking access'
+    };
+  }
+}
+
+/**
+ * Get video playback URL with access control
+ */
+export async function getPlaybackUrl(
+  userId: string,
+  playbackId: string,
+  contentType: 'episode' | 'extra'
+): Promise<{ success: boolean; url?: string; error?: string; accessDenied?: boolean }> {
+  try {
+    // Check if user has access
+    const accessCheck = await checkContentAccess(userId, contentType);
+
+    if (!accessCheck.hasAccess) {
+      console.log(`❌ Access denied for user ${userId} to ${contentType}: ${accessCheck.reason}`);
+      return {
+        success: false,
+        accessDenied: true,
+        error: accessCheck.reason || 'Access denied'
+      };
+    }
+
+    // Generate signed URL
+    const result = await generateSignedPlaybackUrl(playbackId, userId);
+
+    if (result.success && result.url) {
+      console.log(`✅ Playback URL generated for user ${userId}, content type: ${contentType}`);
+      return {
+        success: true,
+        url: result.url
+      };
+    }
+
+    return {
+      success: false,
+      error: result.error || 'Failed to generate playback URL'
+    };
+
+  } catch (error) {
+    console.error('❌ Error getting playback URL:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get playback URL'
+    };
+  }
+}
+
+/**
+ * Save watch progress for a video
+ */
+export async function saveWatchProgress(
+  userId: string,
+  videoId: string,
+  currentTime: number,
+  duration: number
+) {
+  try {
+    const progress = Math.round((currentTime / duration) * 100);
+
+    await admin.firestore()
+      .collection('watchProgress')
+      .doc(`${userId}_${videoId}`)
+      .set({
+        userId: userId,
+        videoId: videoId,
+        currentTime: currentTime,
+        duration: duration,
+        progress: progress,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+    return {
+      success: true,
+      progress: progress
+    };
+
+  } catch (error) {
+    console.error('❌ Error saving watch progress:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to save progress'
+    };
+  }
+}
+
+/**
+ * Get watch progress for a video
+ */
+export async function getWatchProgress(userId: string, videoId: string) {
+  try {
+    const progressDoc = await admin.firestore()
+      .collection('watchProgress')
+      .doc(`${userId}_${videoId}`)
+      .get();
+
+    if (progressDoc.exists) {
+      return {
+        success: true,
+        progress: progressDoc.data()
+      };
+    }
+
+    return {
+      success: true,
+      progress: null
+    };
+
+  } catch (error) {
+    console.error('❌ Error getting watch progress:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get progress'
+    };
+  }
+}
+

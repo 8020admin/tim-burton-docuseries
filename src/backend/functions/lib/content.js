@@ -3,52 +3,79 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.contentRoutes = void 0;
 const admin = require("firebase-admin");
 const express = require("express");
+const mux_1 = require("./mux");
 const router = express.Router();
 exports.contentRoutes = router;
-// Get signed video URL
-router.post('/signed-url', async (req, res) => {
+// Get signed video URL with access control
+router.post('/playback-url', async (req, res) => {
     try {
-        const { videoId } = req.body;
-        // This would integrate with Mux to generate signed URLs
-        // For now, return a mock signed URL
-        const signedUrl = `https://stream.mux.com/${videoId}.m3u8?token=mock_token_${Date.now()}`;
-        res.json({
-            success: true,
-            signedUrl: signedUrl
+        const { userId, playbackId, contentType } = req.body;
+        if (!userId || !playbackId || !contentType) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameters: userId, playbackId, contentType'
+            });
+        }
+        if (!['episode', 'extra'].includes(contentType)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid content type. Must be "episode" or "extra"'
+            });
+        }
+        // Get playback URL with access control
+        const result = await (0, mux_1.getPlaybackUrl)(userId, playbackId, contentType);
+        if (result.success && result.url) {
+            return res.json({
+                success: true,
+                url: result.url
+            });
+        }
+        if (result.accessDenied) {
+            return res.status(403).json({
+                success: false,
+                error: result.error || 'Access denied',
+                accessDenied: true
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            error: result.error || 'Failed to generate playback URL'
         });
     }
     catch (error) {
-        console.error('Signed URL generation error:', error);
-        res.status(400).json({
+        console.error('Playback URL error:', error);
+        res.status(500).json({
             success: false,
-            error: 'Failed to generate signed URL'
+            error: 'Failed to generate playback URL'
         });
     }
 });
 // Save watch progress
 router.post('/progress', async (req, res) => {
     try {
-        const { videoId, userId, currentTime, duration, progress } = req.body;
-        // Save progress to Firestore
-        await admin.firestore()
-            .collection('watchProgress')
-            .doc(`${userId}_${videoId}`)
-            .set({
-            userId: userId,
-            videoId: videoId,
-            currentTime: currentTime,
-            duration: duration,
-            progress: progress,
-            lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-        });
-        res.json({
-            success: true,
-            message: 'Progress saved'
+        const { videoId, userId, currentTime, duration } = req.body;
+        if (!videoId || !userId || currentTime === undefined || !duration) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameters: videoId, userId, currentTime, duration'
+            });
+        }
+        const result = await (0, mux_1.saveWatchProgress)(userId, videoId, currentTime, duration);
+        if (result.success) {
+            return res.json({
+                success: true,
+                message: 'Progress saved',
+                progress: result.progress
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            error: result.error || 'Failed to save progress'
         });
     }
     catch (error) {
         console.error('Progress save error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             error: 'Failed to save progress'
         });
@@ -58,33 +85,28 @@ router.post('/progress', async (req, res) => {
 router.get('/progress/:videoId', async (req, res) => {
     try {
         const { videoId } = req.params;
-        const userId = req.query.userId; // This would come from authenticated user
+        const userId = req.query.userId;
         if (!userId) {
             return res.status(400).json({
                 success: false,
                 error: 'User ID required'
             });
         }
-        const progressDoc = await admin.firestore()
-            .collection('watchProgress')
-            .doc(`${userId}_${videoId}`)
-            .get();
-        if (progressDoc.exists) {
-            res.json({
+        const result = await (0, mux_1.getWatchProgress)(userId, videoId);
+        if (result.success) {
+            return res.json({
                 success: true,
-                progress: progressDoc.data()
+                progress: result.progress
             });
         }
-        else {
-            res.json({
-                success: true,
-                progress: null
-            });
-        }
+        return res.status(500).json({
+            success: false,
+            error: result.error || 'Failed to get progress'
+        });
     }
     catch (error) {
         console.error('Progress retrieval error:', error);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             error: 'Failed to get progress'
         });
