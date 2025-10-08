@@ -32,12 +32,10 @@
 2. Click **Generate new key**
 3. Name it: "Tim Burton Playback"
 4. Click **Generate**
-5. **SAVE THESE**:
+5. **SAVE THESE** (the private key will be a base64-encoded string ending with `=`):
    ```
-   MUX_SIGNING_KEY_ID=zzzzzzzzzzzzzzzzzz
-   MUX_SIGNING_KEY_PRIVATE=-----BEGIN RSA PRIVATE KEY-----
-   (long key here)
-   -----END RSA PRIVATE KEY-----
+   MUX_SIGNING_KEY=zzzzzzzzzzzzzzzzzz
+   MUX_PRIVATE_KEY=aBcDeFgHiJkLmNoPqRsTuVwXyZ123456789+/=
    ```
 
 ---
@@ -95,13 +93,13 @@ Once you have the credentials, add them to the backend:
    # Mux Configuration
    MUX_TOKEN_ID=your_token_id_here
    MUX_TOKEN_SECRET=your_token_secret_here
-   MUX_SIGNING_KEY_ID=your_signing_key_id_here
-   MUX_SIGNING_KEY_PRIVATE="-----BEGIN RSA PRIVATE KEY-----
-   your_private_key_here
-   -----END RSA PRIVATE KEY-----"
+   MUX_SIGNING_KEY=your_signing_key_id_here
+   MUX_PRIVATE_KEY=your_base64_encoded_private_key_ending_with_equals=
    ```
 
 3. Save the file
+
+**Note:** The `MUX_PRIVATE_KEY` should be pasted as-is (it's a long base64 string ending with `=`)
 
 ---
 
