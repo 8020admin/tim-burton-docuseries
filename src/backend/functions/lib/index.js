@@ -14,6 +14,7 @@ const app = express();
 const allowedOrigins = [
     'https://tim-burton-docuseries.pages.dev',
     'https://timburton-dev.webflow.io',
+    'https://tim-burton-docuseries-264403.webflow.io',
     'http://localhost:8000',
     'http://localhost:8001'
 ];
