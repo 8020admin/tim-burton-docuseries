@@ -87,13 +87,18 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client"></script>
 
-<!-- Tim Burton Auth (Cloudflare Pages) -->
+<!-- HLS.js for video playback -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- Tim Burton Auth & Video Player (Cloudflare Pages) -->
 <script src="https://tim-burton-docuseries.pages.dev/js/client-auth.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/webflow-auth-handlers.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/content-access.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/button-state-manager.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/stripe-integration.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/user-profile.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/video-player.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/content-manager.js"></script>
 ```
 
 ---
@@ -974,6 +979,151 @@ New users get randomly assigned one of these avatars:
 - Avatar 1-7 (various styles)
 - Google users get their Google profile picture if available
 - Fallback to random avatar if Google picture unavailable
+
+----
+
+## 🎬 **12. Video Player Integration**
+
+### **Overview**
+The video player is a **viewport-filling modal** that:
+- ✅ Opens when clicking video thumbnails
+- ✅ Fills the entire viewport (not inline)
+- ✅ Supports fullscreen playback
+- ✅ Uses HLS.js for adaptive streaming
+- ✅ Automatically handles access control
+- ✅ Tracks watch progress
+- ✅ Works seamlessly with authentication
+
+### **Setup Video Thumbnails**
+
+**Step 1: Add `data-video-id` Attribute**
+
+In Webflow, add the `data-video-id` attribute to any clickable element (image, button, div, etc.):
+
+1. Select your video thumbnail or poster image
+2. Go to **Settings** → **Custom Attributes**
+3. Add:
+   - Name: `data-video-id`
+   - Value: `episode-1` (or `episode-2`, `episode-3`, `bonus-1`)
+
+**Available Video IDs:**
+- `episode-1` - Suburban Hell
+- `episode-2` - Misunderstood Monsters  
+- `episode-3` - Rebel by Design
+- `bonus-1` - Behind the Scenes (Box Set only)
+
+**Example Webflow Structure:**
+```html
+<!-- Episode Thumbnail -->
+<div class="episode-card">
+  <img 
+    src="episode-1-thumbnail.jpg" 
+    alt="Episode 1"
+    data-video-id="episode-1"
+    style="cursor: pointer;"
+  />
+  <h3>Suburban Hell</h3>
+  <p>Episode 1</p>
+</div>
+
+<!-- Bonus Content (Box Set Required) -->
+<div class="bonus-card" data-boxset-required="true">
+  <img 
+    src="bonus-thumbnail.jpg"
+    alt="Behind the Scenes"
+    data-video-id="bonus-1"
+    style="cursor: pointer;"
+  />
+  <h3>Behind the Scenes</h3>
+  <p>Box Set Exclusive</p>
+</div>
+```
+
+### **How It Works**
+
+1. **User clicks thumbnail** with `data-video-id`
+2. **Content Manager** looks up the playback ID
+3. **Backend validates** user has access (rental/regular/boxset)
+4. **Signed URL** is generated (secure, time-limited)
+5. **Video Player** opens as full-viewport modal
+6. **HLS streaming** starts automatically
+7. **Watch progress** is tracked every 10 seconds
+
+### **Access Control**
+
+The system automatically enforces access rules:
+
+| Content Type | Rental | Regular | Box Set |
+|--------------|--------|---------|---------|
+| Episodes (1-3) | ✅ | ✅ | ✅ |
+| Bonus Content | ❌ | ❌ | ✅ |
+
+- Users with **expired rentals** cannot access videos
+- **Signed URLs** expire after 7 days
+- All requests are **authenticated** via Firebase token
+
+### **Player Controls**
+
+**Keyboard Shortcuts:**
+- `Spacebar` - Play/Pause
+- `F` - Toggle fullscreen
+- `Escape` - Close player
+
+**Features:**
+- ✅ Adaptive bitrate streaming (HLS)
+- ✅ Fullscreen support
+- ✅ Resume from last position
+- ✅ Loading states
+- ✅ Error handling
+- ✅ Mobile-friendly
+- ✅ Native controls (play, pause, scrub, volume, fullscreen)
+
+### **Configuring Playback IDs**
+
+After uploading videos to Mux, update the playback IDs in the browser console:
+
+```javascript
+// Option 1: Update individual video
+window.contentManager.updatePlaybackId('episode-1', 'abc123xyz...');
+
+// Option 2: Batch update all videos
+window.contentManager.updateAllPlaybackIds({
+  'episode-1': 'abc123xyz...',
+  'episode-2': 'def456uvw...',
+  'episode-3': 'ghi789rst...',
+  'bonus-1': 'jkl012qpo...'
+});
+```
+
+Or edit `public/js/content-manager.js` directly and redeploy.
+
+### **Testing**
+
+1. **Test Authentication:** Sign in with a test account
+2. **Test Rental Access:** Buy rental, try playing episode
+3. **Test Box Set Access:** Buy box set, try playing bonus content
+4. **Test Expiration:** Wait for rental to expire, verify access denied
+5. **Test Resume:** Play video, close, reopen - should resume
+6. **Test Fullscreen:** Press `F` or click fullscreen button
+7. **Test Error Handling:** Try accessing video without purchase
+
+### **Troubleshooting**
+
+**Video won't play:**
+- Check user is signed in and has active purchase
+- Verify playback ID is configured (not `REPLACE_WITH_...`)
+- Check browser console for errors
+- Ensure HLS.js script is loaded
+
+**Player doesn't open:**
+- Verify `data-video-id` attribute is set
+- Check element is clickable (`cursor: pointer`)
+- Ensure video player scripts are loaded
+
+**Access denied:**
+- Verify user has correct purchase type
+- Check rental hasn't expired
+- Ensure backend has Mux credentials configured
 
 ----
 
