@@ -500,6 +500,21 @@ class TimBurtonAuth {
     return this.currentUser;
   }
   
+  async getIdToken() {
+    // If we have a cached token, return it
+    if (this.idToken) {
+      return this.idToken;
+    }
+    
+    // If user is signed in, get fresh token from Firebase
+    if (this.firebaseAuth && this.firebaseAuth.currentUser) {
+      this.idToken = await this.firebaseAuth.currentUser.getIdToken(true);
+      return this.idToken;
+    }
+    
+    throw new Error('User not signed in');
+  }
+  
   getPurchaseStatus() {
     return this.purchaseStatus;
   }
