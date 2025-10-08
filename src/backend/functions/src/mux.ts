@@ -32,44 +32,30 @@ function getMuxClient(): Mux {
 
 /**
  * Generate signed playback URL for a video
- * This creates a time-limited, secure URL that can only be used by the intended user
+ * Uses Mux's built-in JWT helper for secure URL generation
  */
 export async function generateSignedPlaybackUrl(
   playbackId: string,
   userId: string,
-  expiresIn: number = 86400 // 24 hours in seconds
+  expiresIn: number = 604800 // 7 days in seconds (Mux default)
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    const signingKeyId = process.env.MUX_SIGNING_KEY_ID;
-    const signingKeyPrivate = process.env.MUX_SIGNING_KEY_PRIVATE;
-
-    if (!signingKeyId || !signingKeyPrivate) {
-      throw new Error('Mux signing keys not configured. Please set MUX_SIGNING_KEY_ID and MUX_SIGNING_KEY_PRIVATE.');
+    // Environment variables for signing (Mux SDK will auto-detect these)
+    // MUX_SIGNING_KEY = signing key ID
+    // MUX_PRIVATE_KEY = private key
+    
+    if (!process.env.MUX_SIGNING_KEY || !process.env.MUX_PRIVATE_KEY) {
+      throw new Error('Mux signing keys not configured. Please set MUX_SIGNING_KEY and MUX_PRIVATE_KEY environment variables.');
     }
 
-    // Import JWT library for signing
-    const jwt = require('jsonwebtoken');
-
-    // Create expiration timestamp
-    const exp = Math.floor(Date.now() / 1000) + expiresIn;
-
-    // Create JWT payload
-    const payload = {
-      sub: playbackId,
-      aud: 'v', // 'v' for video playback
-      exp: exp,
-      kid: signingKeyId,
-      // Optional: Add custom claims
-      metadata: {
-        userId: userId,
-        timestamp: Date.now()
+    // Use Mux's built-in JWT helper
+    const token = Mux.JWT.signPlaybackId(playbackId, {
+      type: 'video',
+      expiration: `${expiresIn}s`,
+      params: {
+        // Optional: Add custom params that will be validated
+        user_id: userId
       }
-    };
-
-    // Sign the token
-    const token = jwt.sign(payload, signingKeyPrivate, {
-      algorithm: 'RS256',
-      keyid: signingKeyId
     });
 
     // Construct the signed URL
