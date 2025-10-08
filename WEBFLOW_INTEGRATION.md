@@ -99,6 +99,7 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <script src="https://tim-burton-docuseries.pages.dev/js/user-profile.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/video-player.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/content-manager.js"></script>
+<script src="https://tim-burton-docuseries.pages.dev/js/init-video-player.js"></script>
 ```
 
 ---
