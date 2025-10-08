@@ -159,7 +159,7 @@ class TimBurtonVideoPlayer {
     
     // Attach event listeners
     document.getElementById('tb-player-close').addEventListener('click', () => this.close());
-    this.videoElement.addEventListener('timeupdate', this.updateProgress);
+    this.videoElement.addEventListener('timeupdate', () => this.updateProgress());
   }
 
   /**
