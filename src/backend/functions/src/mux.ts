@@ -3,16 +3,18 @@
  * Handles video streaming, signed URLs, and content delivery
  */
 
-import Mux from '@mux/mux-node';
 import * as admin from 'firebase-admin';
 
+// Use CommonJS require for Mux (as per official documentation)
+const Mux = require('@mux/mux-node');
+
 // Initialize Mux client
-let muxClient: Mux | null = null;
+let muxClient: any = null;
 
 /**
  * Get or initialize Mux client
  */
-function getMuxClient(): Mux {
+function getMuxClient(): any {
   if (!muxClient) {
     const tokenId = process.env.MUX_TOKEN_ID;
     const tokenSecret = process.env.MUX_TOKEN_SECRET;
