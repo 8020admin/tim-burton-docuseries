@@ -8,27 +8,26 @@ class TimBurtonContentManager {
     this.videoPlayer = videoPlayer;
     
     // Content catalog with Mux playback IDs
-    // UPDATE THESE with your actual Mux playback IDs
     this.catalog = {
       episodes: [
         {
           id: 'episode-1',
           title: 'Suburban Hell',
-          playbackId: 'REPLACE_WITH_PLAYBACK_ID_1', // Get from Mux Dashboard
+          playbackId: 'NKED3IcnhrOw8vm4Xb36pxvecZTUKN02Bqa6CoAF8d9s',
           duration: null, // Will be populated when video loads
           contentType: 'episode'
         },
         {
           id: 'episode-2',
           title: 'Misunderstood Monsters',
-          playbackId: 'REPLACE_WITH_PLAYBACK_ID_2', // Get from Mux Dashboard
+          playbackId: 'HXWhSS3qlPGKioqou4qjkOyVJfKYGgc02UK02VYzLdxSw',
           duration: null,
           contentType: 'episode'
         },
         {
           id: 'episode-3',
           title: 'Rebel by Design',
-          playbackId: 'REPLACE_WITH_PLAYBACK_ID_3', // Get from Mux Dashboard
+          playbackId: 'NbkUI7kcwjFjmxE3PKFTxoIG014DWZEttFFVgftc5T5k',
           duration: null,
           contentType: 'episode'
         }
@@ -37,7 +36,7 @@ class TimBurtonContentManager {
         {
           id: 'bonus-1',
           title: 'Behind the Scenes',
-          playbackId: 'REPLACE_WITH_PLAYBACK_ID_4', // Get from Mux Dashboard
+          playbackId: '01HoChpoQSVBwf02N2wB2u9GWdGNUK1WdrKXE01ou5tQjQ',
           duration: null,
           contentType: 'extra'
         }
