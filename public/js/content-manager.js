@@ -13,23 +13,38 @@ class TimBurtonContentManager {
         {
           id: 'episode-1',
           title: 'Suburban Hell',
+          episodeNumber: 1,
           playbackId: 'NKED3IcnhrOw8vm4Xb36pxvecZTUKN02Bqa6CoAF8d9s',
-          duration: null, // Will be populated when video loads
-          contentType: 'episode'
+          duration: 6600, // 1h 50m in seconds
+          contentType: 'episode',
+          description: 'The misfit kid who drew his way out of suburban hell.'
         },
         {
           id: 'episode-2',
           title: 'Misunderstood Monsters',
+          episodeNumber: 2,
           playbackId: 'HXWhSS3qlPGKioqou4qjkOyVJfKYGgc02UK02VYzLdxSw',
-          duration: null,
-          contentType: 'episode'
+          duration: 6600, // 1h 50m in seconds
+          contentType: 'episode',
+          description: 'Outsiders, monsters, and the beauty of being different.'
         },
         {
           id: 'episode-3',
           title: 'Rebel by Design',
+          episodeNumber: 3,
           playbackId: 'NbkUI7kcwjFjmxE3PKFTxoIG014DWZEttFFVgftc5T5k',
-          duration: null,
-          contentType: 'episode'
+          duration: 6600, // 1h 50m in seconds
+          contentType: 'episode',
+          description: 'A restless creator who refuses to repeat himself.'
+        },
+        {
+          id: 'episode-4',
+          title: 'Coming Home',
+          episodeNumber: 4,
+          playbackId: 'REPLACE_WITH_PLAYBACK_ID_4', // TODO: Add actual playback ID
+          duration: 6600, // 1h 50m in seconds
+          contentType: 'episode',
+          description: 'Returning to his roots to tell the stories closest to his heart.'
         }
       ],
       extras: [
@@ -38,10 +53,13 @@ class TimBurtonContentManager {
           title: 'Behind the Scenes',
           playbackId: '01HoChpoQSVBwf02N2wB2u9GWdGNUK1WdrKXE01ou5tQjQ',
           duration: null,
-          contentType: 'extra'
+          contentType: 'extra',
+          description: 'Exclusive behind-the-scenes content from the docuseries.'
         }
       ]
     };
+    
+    this.apiBaseUrl = 'https://us-central1-tim-burton-docuseries.cloudfunctions.net/api';
 
     this.initializeThumbnailHandlers();
     
@@ -147,6 +165,129 @@ class TimBurtonContentManager {
     Object.keys(playbackIds).forEach(videoId => {
       this.updatePlaybackId(videoId, playbackIds[videoId]);
     });
+  }
+
+  /**
+   * Fetch continue watching data from backend
+   */
+  async fetchContinueWatching(userId) {
+    try {
+      const response = await fetch(
+        `${this.apiBaseUrl}/content/continue-watching?userId=${userId}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch continue watching data: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to get continue watching data');
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching continue watching:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Populate hero section with continue watching episode
+   */
+  populateHeroSection(continueWatching) {
+    if (!continueWatching) return;
+
+    const episode = this.getVideoById(continueWatching.videoId);
+    if (!episode) return;
+
+    // Update title
+    const titleEl = document.querySelector('[data-hero-title]');
+    if (titleEl) {
+      titleEl.textContent = `Episode ${continueWatching.episodeNumber}: ${continueWatching.title}`;
+    }
+
+    // Update description (if different per episode)
+    const descEl = document.querySelector('[data-hero-description]');
+    if (descEl && episode.description) {
+      descEl.textContent = episode.description;
+    }
+
+    // Update progress bar
+    const progressBarEl = document.querySelector('[data-hero-progress-bar] > div');
+    if (progressBarEl) {
+      progressBarEl.style.width = `${continueWatching.progress}%`;
+    }
+
+    // Update time remaining
+    if (episode.duration) {
+      const remainingSeconds = episode.duration - (continueWatching.currentTime || 0);
+      const hours = Math.floor(remainingSeconds / 3600);
+      const mins = Math.floor((remainingSeconds % 3600) / 60);
+
+      const hoursEl = document.querySelector('[data-hero-time-hours]');
+      const minsEl = document.querySelector('[data-hero-time-mins]');
+      
+      if (hoursEl) hoursEl.textContent = hours.toString();
+      if (minsEl) minsEl.textContent = mins.toString();
+    }
+
+    // Update play button
+    const playButtonEl = document.querySelector('[data-hero-play-button]');
+    if (playButtonEl) {
+      // Set video ID for click handler
+      playButtonEl.setAttribute('data-video-id', continueWatching.videoId);
+
+      // Update button text
+      const buttonTextEl = playButtonEl.querySelector('[data-hero-button-text]');
+      if (buttonTextEl) {
+        buttonTextEl.textContent = continueWatching.isNextEpisode ? 'play' : 'Continue Watching';
+      }
+    }
+
+    console.log(`✅ Hero section updated: ${continueWatching.videoId} (${continueWatching.progress}%)`);
+  }
+
+  /**
+   * Update all progress bars in episode list
+   */
+  updateProgressBars(allProgress) {
+    if (!allProgress) return;
+
+    allProgress.forEach(item => {
+      // Find progress bar by data-video-id
+      const progressBarParent = document.querySelector(`[data-progress-bar][data-video-id="${item.videoId}"]`);
+      
+      if (progressBarParent) {
+        // Get the child div (direct child)
+        const progressBarChild = progressBarParent.querySelector('div');
+        
+        if (progressBarChild) {
+          progressBarChild.style.width = `${item.progress}%`;
+        }
+      }
+    });
+
+    console.log(`✅ Updated ${allProgress.length} progress bars`);
+  }
+
+  /**
+   * Initialize continue watching (call on page load)
+   */
+  async initializeContinueWatching(userId) {
+    try {
+      const data = await this.fetchContinueWatching(userId);
+
+      if (data && data.success) {
+        this.populateHeroSection(data.continueWatching);
+        this.updateProgressBars(data.allProgress);
+      }
+
+    } catch (error) {
+      console.error('❌ Error initializing continue watching:', error);
+    }
   }
 }
 

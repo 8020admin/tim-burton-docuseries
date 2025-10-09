@@ -112,6 +112,122 @@ router.get('/progress/:videoId', async (req, res) => {
         });
     }
 });
+// Get continue watching data (hero section + all progress)
+router.get('/continue-watching', async (req, res) => {
+    var _a, _b, _c;
+    try {
+        const userId = req.query.userId;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID required'
+            });
+        }
+        // Episode sequence (episodes 1-4 only, no bonus content in hero)
+        const episodeSequence = ['episode-1', 'episode-2', 'episode-3', 'episode-4'];
+        const episodeTitles = {
+            'episode-1': 'Suburban Hell',
+            'episode-2': 'Misunderstood Monsters',
+            'episode-3': 'Rebel by Design',
+            'episode-4': 'Coming Home'
+        };
+        // Get all watch progress for user
+        const progressDocs = await admin.firestore()
+            .collection('watchProgress')
+            .where('userId', '==', userId)
+            .get();
+        // Build progress map
+        const progressMap = {};
+        let lastWatched = null;
+        let lastWatchedTime = 0;
+        progressDocs.forEach((doc) => {
+            var _a;
+            const data = doc.data();
+            progressMap[data.videoId] = {
+                videoId: data.videoId,
+                progress: data.progress || 0,
+                completed: data.completed || false,
+                currentTime: data.currentTime || 0,
+                duration: data.duration || 0,
+                lastUpdated: data.lastUpdated
+            };
+            // Track most recently watched
+            const updatedTime = ((_a = data.lastUpdated) === null || _a === void 0 ? void 0 : _a.toMillis()) || 0;
+            if (updatedTime > lastWatchedTime) {
+                lastWatchedTime = updatedTime;
+                lastWatched = data;
+            }
+        });
+        // Determine continue watching episode
+        let continueWatchingVideoId = 'episode-1'; // Default to first episode
+        let isNextEpisode = false;
+        if (lastWatched) {
+            if (lastWatched.completed) {
+                // Find next episode in sequence
+                const currentIndex = episodeSequence.indexOf(lastWatched.videoId);
+                if (currentIndex !== -1 && currentIndex < episodeSequence.length - 1) {
+                    // Next episode
+                    continueWatchingVideoId = episodeSequence[currentIndex + 1];
+                    isNextEpisode = true;
+                }
+                else {
+                    // All episodes watched, loop back to first
+                    continueWatchingVideoId = 'episode-1';
+                    isNextEpisode = true;
+                }
+            }
+            else {
+                // Continue current episode
+                continueWatchingVideoId = lastWatched.videoId;
+                isNextEpisode = false;
+            }
+        }
+        // Get episode number from videoId
+        const episodeNumber = parseInt(continueWatchingVideoId.replace('episode-', ''));
+        const episodeTitle = episodeTitles[continueWatchingVideoId] || 'Unknown';
+        // Build continue watching object
+        const continueWatching = {
+            videoId: continueWatchingVideoId,
+            title: episodeTitle,
+            episodeNumber: episodeNumber,
+            currentTime: ((_a = progressMap[continueWatchingVideoId]) === null || _a === void 0 ? void 0 : _a.currentTime) || 0,
+            progress: ((_b = progressMap[continueWatchingVideoId]) === null || _b === void 0 ? void 0 : _b.progress) || 0,
+            completed: ((_c = progressMap[continueWatchingVideoId]) === null || _c === void 0 ? void 0 : _c.completed) || false,
+            isNextEpisode: isNextEpisode
+        };
+        // Build all progress array
+        const allProgress = episodeSequence.map(videoId => {
+            var _a, _b, _c;
+            return ({
+                videoId: videoId,
+                progress: ((_a = progressMap[videoId]) === null || _a === void 0 ? void 0 : _a.progress) || 0,
+                completed: ((_b = progressMap[videoId]) === null || _b === void 0 ? void 0 : _b.completed) || false,
+                currentTime: ((_c = progressMap[videoId]) === null || _c === void 0 ? void 0 : _c.currentTime) || 0
+            });
+        });
+        // Add bonus content if exists
+        if (progressMap['bonus-1']) {
+            allProgress.push({
+                videoId: 'bonus-1',
+                progress: progressMap['bonus-1'].progress,
+                completed: progressMap['bonus-1'].completed,
+                currentTime: progressMap['bonus-1'].currentTime
+            });
+        }
+        res.json({
+            success: true,
+            continueWatching: continueWatching,
+            allProgress: allProgress
+        });
+    }
+    catch (error) {
+        console.error('Continue watching error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get continue watching data'
+        });
+    }
+});
 // Check content access
 router.post('/access', async (req, res) => {
     try {

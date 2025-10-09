@@ -9,8 +9,8 @@
 // AUTHENTICATION EVENT HANDLERS
 // ============================================================================
 
-document.addEventListener('timBurtonAuth', (event) => {
-  const { type, data, user, isSignedIn } = event.detail;
+document.addEventListener('timBurtonAuth', async (event) => {
+  const { type, data, user, isSignedIn, hasPurchase } = event.detail;
   
   console.log('Auth Event:', event.detail);
   
@@ -19,6 +19,15 @@ document.addEventListener('timBurtonAuth', (event) => {
     case 'signUp':
     case 'sessionRestored':
       hideAuthModal();
+      
+      // Initialize continue watching if user has purchased
+      if (isSignedIn && hasPurchase && user && window.contentManager) {
+        try {
+          await window.contentManager.initializeContinueWatching(user.uid);
+        } catch (error) {
+          console.error('Error initializing continue watching:', error);
+        }
+      }
       break;
       
     case 'signOut':

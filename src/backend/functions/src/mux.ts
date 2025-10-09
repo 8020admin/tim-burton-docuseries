@@ -238,6 +238,7 @@ export async function saveWatchProgress(
 ) {
   try {
     const progress = Math.round((currentTime / duration) * 100);
+    const completed = progress >= 95; // Mark as completed if >= 95%
 
     await admin.firestore()
       .collection('watchProgress')
@@ -248,12 +249,14 @@ export async function saveWatchProgress(
         currentTime: currentTime,
         duration: duration,
         progress: progress,
+        completed: completed,
         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
     return {
       success: true,
-      progress: progress
+      progress: progress,
+      completed: completed
     };
 
   } catch (error) {
