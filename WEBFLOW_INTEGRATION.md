@@ -695,6 +695,48 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   cursor: not-allowed;
 }
 
+/* Hero Section Skeleton Loading */
+.tb-loading-skeleton {
+  position: relative;
+  pointer-events: none;
+}
+
+.tb-loading-skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: tb-skeleton-shimmer 1.5s ease-in-out infinite;
+  z-index: 1;
+  border-radius: 8px;
+}
+
+@keyframes tb-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.tb-loading-skeleton [data-hero-title],
+.tb-loading-skeleton [data-hero-description],
+.tb-loading-skeleton [data-hero-button-text] {
+  color: transparent !important;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
 /* Purchase Modal */
 [data-modal="purchase"] {
   position: fixed;
@@ -1142,6 +1184,7 @@ The system automatically tracks watch progress and intelligently displays the cu
 - ✅ Calculates time remaining accurately
 - ✅ Loops back to Episode 1 when all episodes are watched
 - ✅ Excludes bonus content from hero rotation (only in progress bars)
+- ✅ **Skeleton loading animation** for smooth UX during data fetch (secure, no caching)
 
 ### **Hero Section Attributes**
 

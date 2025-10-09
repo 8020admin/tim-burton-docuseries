@@ -274,10 +274,37 @@ class TimBurtonContentManager {
   }
 
   /**
+   * Show skeleton loading state in hero section
+   */
+  showHeroSkeleton() {
+    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
+    
+    if (heroSection) {
+      heroSection.classList.add('tb-loading-skeleton');
+    }
+  }
+
+  /**
+   * Hide skeleton loading state
+   */
+  hideHeroSkeleton() {
+    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
+    
+    if (heroSection) {
+      heroSection.classList.remove('tb-loading-skeleton');
+    }
+  }
+
+  /**
    * Initialize continue watching (call on page load)
+   * Combines skeleton loading (Option A) + parallel fetch (Option B)
    */
   async initializeContinueWatching(userId) {
     try {
+      // Option A: Show skeleton immediately for instant feedback
+      this.showHeroSkeleton();
+
+      // Option B: Fetch is already parallel (called immediately on auth)
       const data = await this.fetchContinueWatching(userId);
 
       if (data && data.success) {
@@ -285,8 +312,13 @@ class TimBurtonContentManager {
         this.updateProgressBars(data.allProgress);
       }
 
+      // Hide skeleton once data is loaded
+      this.hideHeroSkeleton();
+
     } catch (error) {
       console.error('❌ Error initializing continue watching:', error);
+      // Hide skeleton even on error
+      this.hideHeroSkeleton();
     }
   }
 }
