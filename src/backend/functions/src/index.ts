@@ -15,6 +15,7 @@ const allowedOrigins = [
   'https://tim-burton-docuseries.pages.dev',
   'https://timburton-dev.webflow.io',
   'https://tim-burton-docuseries-264403.webflow.io', // Production Webflow domain
+  'https://tim-burton-docuseries-20d40.webflow.io', // Webflow staging/preview domain
   'http://localhost:8000', // For local testing
   'http://localhost:8001'
 ];
