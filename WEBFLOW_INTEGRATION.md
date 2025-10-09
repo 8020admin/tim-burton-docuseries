@@ -1128,6 +1128,157 @@ Or edit `public/js/content-manager.js` directly and redeploy.
 
 ----
 
+## 📊 **13. Continue Watching & Progress Tracking**
+
+### **Overview**
+
+The system automatically tracks watch progress and intelligently displays the current/next episode in a hero section, with progress bars for all episodes.
+
+**Features:**
+- ✅ Shows current episode being watched in hero section
+- ✅ Shows next episode if previous was completed
+- ✅ Updates progress bars for all episodes automatically
+- ✅ Changes button text dynamically ("Continue Watching" vs "Play")
+- ✅ Calculates time remaining accurately
+- ✅ Loops back to Episode 1 when all episodes are watched
+- ✅ Excludes bonus content from hero rotation (only in progress bars)
+
+### **Hero Section Attributes**
+
+Add these attributes to your hero section elements in Webflow:
+
+**1. Episode Title**
+```html
+<div data-hero-title>Episode 1: Suburban Hell</div>
+```
+- Attribute: `data-hero-title`
+- Updates: Episode number and title
+
+**2. Episode Description**
+```html
+<div data-hero-description>A four-part journey into Tim Burton's world...</div>
+```
+- Attribute: `data-hero-description`
+- Updates: Description based on current episode
+
+**3. Progress Bar Container**
+```html
+<div data-hero-progress-bar>
+  <div class="progress-bar"></div>
+</div>
+```
+- Parent: `data-hero-progress-bar`
+- Child: (no attribute, direct child div)
+- Updates: Child div width to match progress percentage
+
+**4. Time Remaining - Hours**
+```html
+<div data-hero-time-hours>1</div>
+```
+- Attribute: `data-hero-time-hours`
+- Updates: Hours remaining
+
+**5. Time Remaining - Minutes**
+```html
+<div data-hero-time-mins>50</div>
+```
+- Attribute: `data-hero-time-mins`
+- Updates: Minutes remaining
+
+**6. Play Button**
+```html
+<div data-hero-play-button data-video-id="episode-1">
+  <div aria-hidden="true" data-hero-button-text>play</div>
+</div>
+```
+- Button: `data-hero-play-button` + `data-video-id` (auto-updated)
+- Text: `data-hero-button-text`
+- Updates: Button text ("Continue Watching" or "play") and `data-video-id`
+
+### **Episode List Progress Bars**
+
+For each episode in your episode list, add these attributes:
+
+```html
+<!-- Episode 1 -->
+<div data-progress-bar data-video-id="episode-1">
+  <div class="progress-bar"></div>
+</div>
+
+<!-- Episode 2 -->
+<div data-progress-bar data-video-id="episode-2">
+  <div class="progress-bar"></div>
+</div>
+
+<!-- Episode 3 -->
+<div data-progress-bar data-video-id="episode-3">
+  <div class="progress-bar"></div>
+</div>
+
+<!-- Episode 4 -->
+<div data-progress-bar data-video-id="episode-4">
+  <div class="progress-bar"></div>
+</div>
+
+<!-- Bonus Content -->
+<div data-progress-bar data-video-id="bonus-1">
+  <div class="progress-bar"></div>
+</div>
+```
+
+**Attributes:**
+- Parent: `data-progress-bar` + `data-video-id`
+- Child: (no attribute, direct child div)
+
+**Video IDs:**
+- Episodes: `episode-1`, `episode-2`, `episode-3`, `episode-4`
+- Bonus: `bonus-1`
+
+### **Episode Sequencing Logic**
+
+The system follows this flow:
+
+1. **No watch history** → Shows Episode 1 with "Play" button
+2. **Watching Episode 1 (25% complete)** → Shows Episode 1 with "Continue Watching" button
+3. **Completed Episode 1** → Shows Episode 2 with "Play" button
+4. **Completed Episode 2** → Shows Episode 3 with "Play" button
+5. **Completed Episode 3** → Shows Episode 4 with "Play" button
+6. **Completed Episode 4** → Loops back to Episode 1 with "Play" button
+
+**Important:** Bonus content is NOT included in hero rotation (only in progress bars).
+
+### **Testing Progress Tracking**
+
+After adding all attributes and publishing your Webflow site:
+
+1. **Sign in** with a user who has purchased
+2. **Refresh** the page
+3. **Check console** for: `✅ Hero section updated: episode-1 (0%)`
+4. **Verify** hero section shows Episode 1
+5. **Watch** some of Episode 1
+6. **Refresh** page → Verify progress bar and time remaining updated
+7. **Complete** Episode 1 (watch to 95%+)
+8. **Refresh** page → Verify hero now shows Episode 2 with "Play" button
+
+### **Troubleshooting Progress Tracking**
+
+**Hero section not updating:**
+- Check all `data-hero-*` attributes are correct
+- Check browser console for errors
+- Verify user is signed in and has purchased
+- Check `window.contentManager` exists in console
+
+**Progress bars not updating:**
+- Verify `data-progress-bar` attribute on container
+- Verify `data-video-id` matches exactly (`episode-1`, not `Episode-1`)
+- Check direct child div exists for width update
+
+**Button text not changing:**
+- Verify `data-hero-button-text` attribute
+- Check if element is the text element (not icon wrapper)
+
+----
+
 ## 📚 **Quick Reference Table**
 
 | Element Type | Attribute | Value |
@@ -1176,10 +1327,19 @@ Or edit `public/js/content-manager.js` directly and redeploy.
 | **Feedback** |
 | Error Container | `data-auth-error` | - |
 | Success Container | `data-auth-success` | - |
+| **Continue Watching & Progress** |
+| Hero Title | `data-hero-title` | - |
+| Hero Description | `data-hero-description` | - |
+| Hero Progress Bar | `data-hero-progress-bar` | - |
+| Hero Time Hours | `data-hero-time-hours` | - |
+| Hero Time Minutes | `data-hero-time-mins` | - |
+| Hero Play Button | `data-hero-play-button` | - |
+| Hero Button Text | `data-hero-button-text` | - |
+| Episode Progress Bar | `data-progress-bar` | (+ `data-video-id`) |
 
 ---
 
-## 🔧 **13. Webflow Setup Steps**
+## 🔧 **14. Webflow Setup Steps**
 
 ### **Step 1: Add Custom Attributes**
 1. Select any element in Webflow Designer
@@ -1201,7 +1361,7 @@ Or edit `public/js/content-manager.js` directly and redeploy.
 
 ---
 
-## ✅ **14. Testing Results**
+## ✅ **15. Testing Results**
 
 The system has been thoroughly tested and verified:
 
@@ -1217,7 +1377,7 @@ The system has been thoroughly tested and verified:
 
 ---
 
-## 🐛 **15. Troubleshooting**
+## 🐛 **16. Troubleshooting**
 
 ### **Modal appearing at bottom of page instead of centered:**
 
@@ -1270,7 +1430,7 @@ Add your Webflow domain to Google Cloud Console:
 
 ---
 
-## 🚀 **16. System Status**
+## 🚀 **17. System Status**
 
 **✅ PRODUCTION READY**
 
@@ -1290,7 +1450,7 @@ All core features are deployed and functional:
 
 ---
 
-## 📝 **17. Benefits of This System**
+## 📝 **18. Benefits of This System**
 
 1. **🎯 No Conflicts** - Data attributes won't conflict with Webflow's auto-generated IDs
 2. **🔄 Reusable** - Same attributes can be used on multiple pages
@@ -1303,7 +1463,7 @@ All core features are deployed and functional:
 
 ---
 
-## 🎓 **18. Need Help?**
+## 🎓 **19. Need Help?**
 
 If you need to add a new interaction:
 1. Choose a semantic attribute name (e.g., `data-my-feature`)
