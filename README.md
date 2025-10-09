@@ -12,10 +12,10 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 **Tech Stack:**
 - **Frontend**: Webflow + Cloudflare Pages
 - **Authentication**: Firebase Auth (Google + Email/Password)
-- **Backend**: Firebase Cloud Functions
+- **Backend**: Firebase Cloud Functions (Node.js + TypeScript)
 - **Database**: Cloud Firestore
 - **Payments**: Stripe
-- **Video**: Mux (planned)
+- **Video**: Mux (HLS.js streaming, signed URLs)
 
 ---
 
@@ -26,10 +26,11 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 - **[Stripe Guide](STRIPE_GUIDE.md)** - Payment integration and setup
 - **[Firebase Guide](FIREBASE_GUIDE.md)** - Firebase setup and security
 - **[Cloudflare Deployment](CLOUDFLARE_DEPLOYMENT.md)** - Deployment instructions
+- **[Mux Setup Guide](MUX_SETUP_GUIDE.md)** - Video streaming configuration
 
-### **Project Planning**
+### **Product Setup**
+- **[Stripe Products Setup](STRIPE_PRODUCTS_SETUP.md)** - Stripe product configuration
 - **[Project Specification](PROJECT_SPEC.md)** - Full project requirements and features
-- **[Production Status](PRODUCTION_STATUS.md)** - Current system status and deployment info
 
 ---
 
@@ -321,18 +322,22 @@ npm run deploy
 - ✅ Session Management & Persistence
 - ✅ Content Access Control (Attribute-based)
 - ✅ Button State Management (Buy/Watch Now)
-- ✅ Stripe Integration (Checkout + Webhooks)
+- ✅ Stripe Integration (Checkout + Webhooks + Duplicate Purchase Prevention)
 - ✅ Customer Management (Proper Stripe Customers)
 - ✅ Purchase Processing (End-to-end)
 - ✅ Attribute-based Interactions
 - ✅ Error Handling & Loading States
 - ✅ User Profile Management (firstName, lastName, photoURL)
+- ✅ Mux Video Streaming (HLS.js, signed URLs, access control)
+- ✅ Watch Progress Tracking (Firestore, resume playback)
+- ✅ Continue Watching System (Smart sequencing, skeleton loading)
+- ✅ Full-viewport Video Player (Fullscreen, keyboard shortcuts)
 
-**Next Steps:**
-- [ ] Mux video integration
-- [ ] Content management system
-- [ ] Admin dashboard
-- [ ] Analytics integration
+**Future Enhancements:**
+- [ ] Webflow CMS integration for episode content (webhooks)
+- [ ] Admin dashboard for content management
+- [ ] Analytics integration (Mux Data, Google Analytics)
+- [ ] Email notifications (rental expiration, new content)
 
 ---
 
