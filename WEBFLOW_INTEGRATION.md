@@ -1037,7 +1037,7 @@ The video player is a **viewport-filling modal** that:
 - ✅ Supports fullscreen playback
 - ✅ Uses HLS.js for adaptive streaming (or native iOS player on Safari/iOS)
 - ✅ **Chromecast support** - Cast to your TV with one click
-- ✅ **iOS native player** - Beautiful native playback on iPhone/iPad
+- ✅ **iOS auto-fullscreen** - Automatically launches in fullscreen on iPhone/iPad with native controls
 - ✅ Automatically handles access control
 - ✅ Tracks watch progress
 - ✅ Works seamlessly with authentication
@@ -1120,7 +1120,7 @@ The system automatically enforces access rules:
 **Features:**
 - ✅ Adaptive bitrate streaming (HLS)
 - ✅ **Chromecast support** - Cast button appears automatically when Chromecast is available
-- ✅ **iOS native player** - Automatically uses iOS native HLS player for best quality
+- ✅ **iOS native player** - Automatically launches in fullscreen on iPhone/iPad with native controls and AirPlay
 - ✅ Fullscreen support
 - ✅ Resume from last position
 - ✅ Loading states

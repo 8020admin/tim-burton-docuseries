@@ -70,6 +70,10 @@ class TimBurtonVideoPlayer {
       transition: opacity 0.3s ease;
     `;
 
+    // Detect iOS for native fullscreen behavior
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const playsInlineAttr = isIOS ? '' : 'playsinline';
+
     modal.innerHTML = `
       <div style="position: relative; width: 100%; height: 100%;">
         <!-- Close Button -->
@@ -110,7 +114,7 @@ class TimBurtonVideoPlayer {
           <video 
             id="tb-video-element"
             controls
-            playsinline
+            ${playsInlineAttr}
             style="
               width: 100%;
               height: 100%;
