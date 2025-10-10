@@ -15,6 +15,12 @@ class TimBurtonVideoPlayer {
     this.hls = null;
     this.videoElement = null;
     this.progressSaveInterval = null;
+    this.currentVideoTitle = null;
+    this.currentVideoUrl = null;
+    
+    // Chromecast state
+    this.castSession = null;
+    this.castPlayer = null;
     
     // Create player modal
     this.createPlayerModal();
@@ -23,7 +29,26 @@ class TimBurtonVideoPlayer {
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.updateProgress = this.updateProgress.bind(this);
     
+    // Initialize Chromecast
+    this.initializeChromecast();
+    
     console.log('✅ TimBurtonVideoPlayer initialized');
+  }
+
+  /**
+   * Initialize Google Cast SDK for Chromecast support
+   */
+  initializeChromecast() {
+    window['__onGCastApiAvailable'] = (isAvailable) => {
+      if (isAvailable) {
+        cast.framework.CastContext.getInstance().setOptions({
+          receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+        });
+        
+        console.log('✅ Chromecast initialized');
+      }
+    };
   }
 
   /**
@@ -63,6 +88,16 @@ class TimBurtonVideoPlayer {
           z-index: 10000;
           transition: background 0.2s;
         " aria-label="Close player">×</button>
+
+        <!-- Chromecast Button -->
+        <google-cast-launcher id="tb-castbutton" style="
+          position: absolute;
+          top: 20px;
+          right: 80px;
+          width: 48px;
+          height: 48px;
+          z-index: 10000;
+        "></google-cast-launcher>
 
         <!-- Video Container -->
         <div style="
@@ -165,7 +200,7 @@ class TimBurtonVideoPlayer {
   /**
    * Open player and load video
    */
-  async play(videoId, playbackId, contentType = 'episode') {
+  async play(videoId, playbackId, contentType = 'episode', title = 'Tim Burton Docuseries') {
     if (!this.auth || !this.auth.isSignedIn()) {
       this.showError('Please sign in to watch videos');
       return;
@@ -174,6 +209,7 @@ class TimBurtonVideoPlayer {
     this.currentVideoId = videoId;
     this.currentPlaybackId = playbackId;
     this.currentContentType = contentType;
+    this.currentVideoTitle = title;
 
     // Open modal
     this.modal.style.display = 'block';
@@ -225,12 +261,24 @@ class TimBurtonVideoPlayer {
   }
 
   /**
-   * Load video using HLS.js
+   * Load video using HLS.js or native player
    */
   async loadVideo(hlsUrl) {
-    // Check if HLS.js is needed (Safari has native HLS support)
+    // Store URL for Chromecast
+    this.currentVideoUrl = hlsUrl;
+
+    // Check if casting to Chromecast
+    if (window.cast && cast.framework) {
+      const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+      if (castSession) {
+        this.loadOnChromecast(hlsUrl);
+        return;
+      }
+    }
+
+    // Check if HLS.js is needed (Safari/iOS has native HLS support)
     if (this.videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS support (Safari)
+      // Native HLS support (Safari, iOS)
       this.videoElement.src = hlsUrl;
       this.hideLoading();
     } else if (window.Hls && Hls.isSupported()) {
@@ -275,6 +323,35 @@ class TimBurtonVideoPlayer {
     } else {
       this.showError('Your browser does not support video playback. Please use a modern browser.');
     }
+  }
+
+  /**
+   * Load video on Chromecast
+   */
+  loadOnChromecast(hlsUrl) {
+    const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+    if (!castSession) return;
+
+    const mediaInfo = new chrome.cast.media.MediaInfo(hlsUrl, 'application/x-mpegurl');
+    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+    mediaInfo.metadata.title = this.currentVideoTitle || 'Tim Burton Docuseries';
+    
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+    request.currentTime = this.videoElement.currentTime || 0;
+    request.autoplay = true;
+
+    castSession.loadMedia(request).then(
+      () => {
+        console.log('✅ Media loaded on Chromecast');
+        this.hideLoading();
+        // Hide local video, show casting message
+        this.videoElement.style.display = 'none';
+      },
+      (errorCode) => {
+        console.error('❌ Chromecast load error:', errorCode);
+        this.showError('Failed to cast to Chromecast');
+      }
+    );
   }
 
   /**

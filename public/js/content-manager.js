@@ -105,8 +105,11 @@ class TimBurtonContentManager {
       return;
     }
 
-    // Open video player
-    this.videoPlayer.play(video.id, video.playbackId, video.contentType);
+    // Open video player with title for Chromecast
+    const title = video.episodeNumber 
+      ? `Episode ${video.episodeNumber}: ${video.title}` 
+      : video.title;
+    this.videoPlayer.play(video.id, video.playbackId, video.contentType, title);
   }
 
   /**

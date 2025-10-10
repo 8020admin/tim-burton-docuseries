@@ -90,6 +90,9 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <!-- HLS.js for video playback -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
+<!-- Google Cast SDK for Chromecast -->
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
 <!-- Tim Burton Auth & Video Player (Cloudflare Pages) -->
 <script src="https://tim-burton-docuseries.pages.dev/js/client-auth.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/webflow-auth-handlers.js"></script>
@@ -1032,7 +1035,9 @@ The video player is a **viewport-filling modal** that:
 - ✅ Opens when clicking video thumbnails
 - ✅ Fills the entire viewport (not inline)
 - ✅ Supports fullscreen playback
-- ✅ Uses HLS.js for adaptive streaming
+- ✅ Uses HLS.js for adaptive streaming (or native iOS player on Safari/iOS)
+- ✅ **Chromecast support** - Cast to your TV with one click
+- ✅ **iOS native player** - Beautiful native playback on iPhone/iPad
 - ✅ Automatically handles access control
 - ✅ Tracks watch progress
 - ✅ Works seamlessly with authentication
@@ -1114,6 +1119,8 @@ The system automatically enforces access rules:
 
 **Features:**
 - ✅ Adaptive bitrate streaming (HLS)
+- ✅ **Chromecast support** - Cast button appears automatically when Chromecast is available
+- ✅ **iOS native player** - Automatically uses iOS native HLS player for best quality
 - ✅ Fullscreen support
 - ✅ Resume from last position
 - ✅ Loading states
