@@ -1184,9 +1184,18 @@ The system automatically tracks watch progress and intelligently displays the cu
 - ✅ Calculates time remaining accurately
 - ✅ Loops back to Episode 1 when all episodes are watched
 - ✅ Excludes bonus content from hero rotation (only in progress bars)
-- ✅ **Skeleton loading animation** for smooth UX during data fetch (secure, no caching)
+- ✅ **Skeleton loading animation** for instant feedback (shows on page load, removes when data arrives)
 
-### **Hero Section Attributes**
+### **Hero Section Setup**
+
+**Step 1: Add Skeleton Class to Hero Wrapper**
+
+1. Select the hero section wrapper (the parent container for all hero elements)
+2. Add class: `hero` (so JavaScript can find it)
+3. Add class: `tb-loading-skeleton` (shows skeleton on page load)
+4. JavaScript will automatically remove `tb-loading-skeleton` once data loads
+
+**Step 2: Add Hero Section Attributes**
 
 Add these attributes to your hero section elements in Webflow:
 

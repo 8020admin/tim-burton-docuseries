@@ -274,18 +274,10 @@ class TimBurtonContentManager {
   }
 
   /**
-   * Show skeleton loading state in hero section
-   */
-  showHeroSkeleton() {
-    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
-    
-    if (heroSection) {
-      heroSection.classList.add('tb-loading-skeleton');
-    }
-  }
-
-  /**
    * Hide skeleton loading state
+   * Note: Skeleton should be added directly in Webflow (class "tb-loading-skeleton")
+   * so it shows immediately on page load for authenticated users.
+   * JavaScript only removes it once data loads.
    */
   hideHeroSkeleton() {
     const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
@@ -297,14 +289,11 @@ class TimBurtonContentManager {
 
   /**
    * Initialize continue watching (call on page load)
-   * Combines skeleton loading (Option A) + parallel fetch (Option B)
+   * Assumes skeleton is already visible from Webflow (for instant feedback)
    */
   async initializeContinueWatching(userId) {
     try {
-      // Option A: Show skeleton immediately for instant feedback
-      this.showHeroSkeleton();
-
-      // Option B: Fetch is already parallel (called immediately on auth)
+      // Fetch data (skeleton already showing from Webflow)
       const data = await this.fetchContinueWatching(userId);
 
       if (data && data.success) {

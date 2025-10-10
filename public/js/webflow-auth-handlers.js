@@ -27,11 +27,17 @@ document.addEventListener('timBurtonAuth', async (event) => {
         } catch (error) {
           console.error('Error initializing continue watching:', error);
         }
+      } else if (window.contentManager && window.contentManager.hideHeroSkeleton) {
+        // Remove skeleton if user has no purchase (so they see default content)
+        window.contentManager.hideHeroSkeleton();
       }
       break;
       
     case 'signOut':
-      // Handled by button-state-manager
+      // Remove skeleton on sign out
+      if (window.contentManager && window.contentManager.hideHeroSkeleton) {
+        window.contentManager.hideHeroSkeleton();
+      }
       break;
       
     case 'signInError':
