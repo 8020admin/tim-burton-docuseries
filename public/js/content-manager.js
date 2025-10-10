@@ -277,13 +277,7 @@ class TimBurtonContentManager {
    * Show skeleton loading state in hero section
    */
   showHeroSkeleton() {
-    // Try to find hero section by common parent classes, fallback to closest section/div container
-    const heroTitle = document.querySelector('[data-hero-title]');
-    if (!heroTitle) return;
-    
-    const heroSection = heroTitle.closest('.hero_content-wrapper, .hero-section, [class*="hero"]') ||
-                        heroTitle.closest('.u-mb-lg, .section, .container') ||
-                        heroTitle.closest('section, div');
+    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
     
     if (heroSection) {
       heroSection.classList.add('tb-loading-skeleton');
@@ -294,13 +288,7 @@ class TimBurtonContentManager {
    * Hide skeleton loading state
    */
   hideHeroSkeleton() {
-    // Try to find hero section by common parent classes, fallback to closest section/div container
-    const heroTitle = document.querySelector('[data-hero-title]');
-    if (!heroTitle) return;
-    
-    const heroSection = heroTitle.closest('.hero_content-wrapper, .hero-section, [class*="hero"]') ||
-                        heroTitle.closest('.u-mb-lg, .section, .container') ||
-                        heroTitle.closest('section, div');
+    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
     
     if (heroSection) {
       heroSection.classList.remove('tb-loading-skeleton');
