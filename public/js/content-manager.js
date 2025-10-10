@@ -283,10 +283,12 @@ class TimBurtonContentManager {
    * JavaScript only removes it once data loads.
    */
   hideHeroSkeleton() {
-    const heroSection = document.querySelector('[data-hero-title]')?.closest('.hero_content-wrapper, .hero-section, [class*="hero"]');
+    // Find the element with skeleton class
+    const heroSection = document.querySelector('.tb-loading-skeleton');
     
     if (heroSection) {
       heroSection.classList.remove('tb-loading-skeleton');
+      console.log('✅ Skeleton loader removed');
     }
   }
 
