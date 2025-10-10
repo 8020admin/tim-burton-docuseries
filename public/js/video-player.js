@@ -284,7 +284,14 @@ class TimBurtonVideoPlayer {
     if (this.videoElement.canPlayType('application/vnd.apple.mpegurl')) {
       // Native HLS support (Safari, iOS)
       this.videoElement.src = hlsUrl;
-      this.hideLoading();
+      
+      // Autoplay on iOS/Safari
+      this.videoElement.play().then(() => {
+        this.hideLoading();
+      }).catch(err => {
+        console.log('Autoplay prevented:', err);
+        this.hideLoading();
+      });
     } else if (window.Hls && Hls.isSupported()) {
       // Use HLS.js for other browsers
       if (this.hls) {
