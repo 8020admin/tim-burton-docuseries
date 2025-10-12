@@ -124,14 +124,14 @@ class ButtonStateManager {
       // Show Rent and Buy buttons, hide Watch Now
       rentButtons.forEach(button => {
         button.style.display = '';
-        button.textContent = 'Rent';
+        button.textContent = 'Rent Now';
         button.disabled = false;
         button.style.opacity = '1';
         button.style.cursor = 'pointer';
       });
       buyButtons.forEach(button => {
         button.style.display = '';
-        button.textContent = 'Buy';
+        button.textContent = 'Buy Now';
         button.disabled = false;
         button.style.opacity = '1';
         button.style.cursor = 'pointer';
@@ -143,14 +143,14 @@ class ButtonStateManager {
       // Show Rent and Buy buttons, hide Watch Now
       rentButtons.forEach(button => {
         button.style.display = '';
-        button.textContent = 'Rent';
+        button.textContent = 'Rent Now';
         button.disabled = false;
         button.style.opacity = '1';
         button.style.cursor = 'pointer';
       });
       buyButtons.forEach(button => {
         button.style.display = '';
-        button.textContent = 'Buy';
+        button.textContent = 'Buy Now';
         button.disabled = false;
         button.style.opacity = '1';
         button.style.cursor = 'pointer';
