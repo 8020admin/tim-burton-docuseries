@@ -108,7 +108,7 @@
 /* ==================== VISIBILITY CONTROL ==================== */
 /* Hide elements until data loads */
 [data-show-after-load="true"] {
-  display: none !important;
+  display: none;
   opacity: 0;
   visibility: hidden;
 }
