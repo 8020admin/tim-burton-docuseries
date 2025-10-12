@@ -278,17 +278,20 @@ class TimBurtonContentManager {
 
   /**
    * Hide skeleton loading state
-   * Note: Skeleton should be added directly in Webflow (class "tb-loading-skeleton")
+   * Note: Skeleton should be added directly in Webflow (classes "tb-loading-skeleton" or "tb-preloading-skeleton")
    * so it shows immediately on page load for authenticated users.
    * JavaScript only removes it once data loads.
    */
   hideHeroSkeleton() {
-    // Find the element with skeleton class
-    const heroSection = document.querySelector('.tb-loading-skeleton');
+    // Find all elements with skeleton classes
+    const skeletonElements = document.querySelectorAll('.tb-loading-skeleton, .tb-preloading-skeleton');
     
-    if (heroSection) {
-      heroSection.classList.remove('tb-loading-skeleton');
-      console.log('✅ Skeleton loader removed');
+    if (skeletonElements.length > 0) {
+      skeletonElements.forEach(element => {
+        element.classList.remove('tb-loading-skeleton');
+        element.classList.remove('tb-preloading-skeleton');
+      });
+      console.log(`✅ Skeleton loader removed from ${skeletonElements.length} element(s)`);
     }
   }
 
