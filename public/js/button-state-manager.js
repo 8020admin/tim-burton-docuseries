@@ -180,18 +180,16 @@ class ButtonStateManager {
           button.textContent = 'Watch Now';
         });
       } else if (purchaseType === 'regular') {
-        // Regular owners: Hide rent, show "Upgrade to Box Set" on buy, show Watch Now
+        // Regular owners: Hide rent, show "Already Owned" on buy, show Watch Now
         rentButtons.forEach(button => {
           button.style.display = 'none';
         });
         buyButtons.forEach(button => {
           button.style.display = '';
-          button.textContent = 'Upgrade to Box Set';
-          button.disabled = false;
-          button.style.opacity = '1';
-          button.style.cursor = 'pointer';
-          // Add attribute to indicate this is an upgrade
-          button.setAttribute('data-purchase-upgrade', 'boxset');
+          button.textContent = 'Already Owned';
+          button.disabled = true;
+          button.style.opacity = '0.6';
+          button.style.cursor = 'not-allowed';
         });
         watchNowButtons.forEach(button => {
           button.style.display = '';
@@ -336,16 +334,8 @@ class ButtonStateManager {
       this.intendedAction = 'buy';
       this.openAuthModal('signup');
     } else {
-      // Check if this is an upgrade to Box Set
-      const upgradeType = button?.getAttribute?.('data-purchase-upgrade');
-      
-      if (upgradeType === 'boxset') {
-        // Direct upgrade to Box Set
-        this.initiateBoxSetPurchase();
-      } else {
-        // User is signed in, show purchase options modal
-        this.showPurchaseOptions();
-      }
+      // User is signed in, show purchase options modal
+      this.showPurchaseOptions();
     }
   }
 

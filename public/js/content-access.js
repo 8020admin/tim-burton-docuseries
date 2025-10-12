@@ -61,9 +61,6 @@ class ContentAccessControl {
     
     // Update elements for authenticated but not paid users
     this.showForNotPaid();
-    
-    // Update upgrade prompt for regular purchasers
-    this.showUpgradePrompt();
   }
 
   /**
@@ -210,20 +207,6 @@ class ContentAccessControl {
     return await this.auth.checkContentAccess(contentType);
   }
 
-  /**
-   * Show upgrade prompt for regular purchasers
-   */
-  showUpgradePrompt() {
-    const elements = document.querySelectorAll('[data-upgrade-prompt="true"]');
-    
-    elements.forEach(element => {
-      if (this.auth && this.auth.isSignedIn() && this.auth.hasPurchase() && !this.auth.hasBoxSetAccess()) {
-        element.style.display = '';
-      } else {
-        element.style.display = 'none';
-      }
-    });
-  }
 }
 
 // Initialize content access control
