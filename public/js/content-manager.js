@@ -7,6 +7,20 @@ class TimBurtonContentManager {
   constructor(videoPlayer) {
     this.videoPlayer = videoPlayer;
     
+    // Set up callback to refresh progress bars when video player closes
+    if (this.videoPlayer) {
+      this.videoPlayer.onClose = () => {
+        // Get current user and refresh progress bars
+        // Add small delay to ensure backend has saved progress
+        setTimeout(() => {
+          const user = window.timBurtonAuth?.currentUser;
+          if (user && user.uid) {
+            this.refreshProgressBars(user.uid);
+          }
+        }, 500);
+      };
+    }
+    
     // Content catalog with Mux playback IDs
     this.catalog = {
       episodes: [
@@ -328,6 +342,26 @@ class TimBurtonContentManager {
       console.error('❌ Error initializing continue watching:', error);
       // Hide skeleton even on error
       this.hideHeroSkeleton();
+    }
+  }
+
+  /**
+   * Refresh progress bars after video playback
+   * This is called when the video player closes to update the UI with latest progress
+   */
+  async refreshProgressBars(userId) {
+    try {
+      const data = await this.fetchContinueWatching(userId);
+
+      if (data && data.success) {
+        // Update hero section with potentially new episode
+        this.populateHeroSection(data.continueWatching);
+        // Update all progress bars
+        this.updateProgressBars(data.allProgress);
+        console.log('✅ Progress bars refreshed after video close');
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing progress bars:', error);
     }
   }
 }

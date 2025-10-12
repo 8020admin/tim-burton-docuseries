@@ -22,6 +22,9 @@ class TimBurtonVideoPlayer {
     this.castSession = null;
     this.castPlayer = null;
     
+    // Callback for when player closes
+    this.onClose = null;
+    
     // Create player modal
     this.createPlayerModal();
     
@@ -493,6 +496,11 @@ class TimBurtonVideoPlayer {
 
     // Remove keyboard listener
     document.removeEventListener('keydown', this.handleKeyPress);
+
+    // Call onClose callback if provided (to refresh progress bars)
+    if (typeof this.onClose === 'function') {
+      this.onClose();
+    }
 
     // Reset state
     this.currentVideoId = null;
