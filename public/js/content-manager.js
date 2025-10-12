@@ -293,6 +293,18 @@ class TimBurtonContentManager {
       });
       console.log(`✅ Skeleton loader removed from ${skeletonElements.length} element(s)`);
     }
+
+    // Show elements that should only appear after loading
+    // Add attribute data-show-after-load="true" in Webflow to hide elements until data loads
+    const hiddenElements = document.querySelectorAll('[data-show-after-load="true"]');
+    if (hiddenElements.length > 0) {
+      hiddenElements.forEach(element => {
+        element.style.display = '';
+        element.style.visibility = 'visible';
+        element.style.opacity = '1';
+      });
+      console.log(`✅ Revealed ${hiddenElements.length} post-load element(s)`);
+    }
   }
 
   /**

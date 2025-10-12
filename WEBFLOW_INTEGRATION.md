@@ -740,6 +740,13 @@ Add this CSS to **Project Settings > Custom Code > Head Code**:
   border-radius: 4px;
 }
 
+/* Hide elements until data loads */
+[data-show-after-load="true"] {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+}
+
 /* Purchase Modal */
 [data-modal="purchase"] {
   position: fixed;
@@ -1199,8 +1206,22 @@ The system automatically tracks watch progress and intelligently displays the cu
 
 1. Select the hero section wrapper (the parent container for all hero elements)
 2. Add class: `hero` (so JavaScript can find it)
-3. Add class: `tb-loading-skeleton` (shows skeleton on page load)
-4. JavaScript will automatically remove `tb-loading-skeleton` once data loads
+3. Add class: `tb-loading-skeleton` or `tb-preloading-skeleton` (shows skeleton on page load)
+4. JavaScript will automatically remove skeleton classes once data loads
+
+**Optional: Hide Elements Until Data Loads**
+
+To prevent elements from appearing before data is ready, add the attribute:
+
+```html
+<div data-show-after-load="true">
+  <!-- This content will be hidden until skeleton is removed -->
+</div>
+```
+
+- Elements with `data-show-after-load="true"` are hidden by CSS
+- JavaScript reveals them when data finishes loading
+- Useful for progress bars, buttons, or any dynamic content that needs data first
 
 **Step 2: Add Hero Section Attributes**
 
