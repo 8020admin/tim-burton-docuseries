@@ -470,9 +470,9 @@ class TimBurtonVideoPlayer {
   /**
    * Close the player
    */
-  close() {
-    // Save progress one last time
-    this.saveProgress();
+  async close() {
+    // Save progress one last time and wait for it to complete
+    await this.saveProgress();
 
     // Stop progress tracking
     this.stopProgressTracking();
@@ -498,6 +498,7 @@ class TimBurtonVideoPlayer {
     document.removeEventListener('keydown', this.handleKeyPress);
 
     // Call onClose callback if provided (to refresh progress bars)
+    // Progress is guaranteed to be saved at this point
     if (typeof this.onClose === 'function') {
       this.onClose();
     }

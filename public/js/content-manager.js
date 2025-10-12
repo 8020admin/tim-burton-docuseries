@@ -11,13 +11,11 @@ class TimBurtonContentManager {
     if (this.videoPlayer) {
       this.videoPlayer.onClose = () => {
         // Get current user and refresh progress bars
-        // Add small delay to ensure backend has saved progress
-        setTimeout(() => {
-          const user = window.timBurtonAuth?.currentUser;
-          if (user && user.uid) {
-            this.refreshProgressBars(user.uid);
-          }
-        }, 500);
+        // Progress is already saved by the time this callback is triggered
+        const user = window.timBurtonAuth?.currentUser;
+        if (user && user.uid) {
+          this.refreshProgressBars(user.uid);
+        }
       };
     }
     
