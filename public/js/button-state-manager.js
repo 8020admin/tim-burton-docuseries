@@ -164,32 +164,24 @@ class ButtonStateManager {
       const purchaseType = purchaseStatus?.type;
       
       if (purchaseType === 'boxset') {
-        // Box Set owners: Hide rent, show "Already Owned" on buy, show Watch Now
+        // Box Set owners: Hide rent and buy buttons, show Watch Now
         rentButtons.forEach(button => {
           button.style.display = 'none';
         });
         buyButtons.forEach(button => {
-          button.style.display = '';
-          button.textContent = 'Already Owned';
-          button.disabled = true;
-          button.style.opacity = '0.6';
-          button.style.cursor = 'not-allowed';
+          button.style.display = 'none';
         });
         watchNowButtons.forEach(button => {
           button.style.display = '';
           button.textContent = 'Watch Now';
         });
       } else if (purchaseType === 'regular') {
-        // Regular owners: Hide rent, show "Already Owned" on buy, show Watch Now
+        // Regular owners: Hide rent and buy buttons, show Watch Now
         rentButtons.forEach(button => {
           button.style.display = 'none';
         });
         buyButtons.forEach(button => {
-          button.style.display = '';
-          button.textContent = 'Already Owned';
-          button.disabled = true;
-          button.style.opacity = '0.6';
-          button.style.cursor = 'not-allowed';
+          button.style.display = 'none';
         });
         watchNowButtons.forEach(button => {
           button.style.display = '';
