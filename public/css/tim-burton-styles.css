@@ -1,34 +1,42 @@
-/**
- * Tim Burton Docuseries - Critical Styles
- * Only includes functionality-critical CSS
- * Designer handles all visual/layout styling in Webflow
- */
+/* Auth Modal */
+[data-modal="auth"] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
-/* ==================== MODAL FUNCTIONALITY ==================== */
-/* Show/hide modals (JS controls display property) */
+/* Show modal when opened by JS */
 [data-modal="auth"][style*="display: flex"],
 [data-modal="auth"][style*="display:flex"] {
   display: flex !important;
 }
 
-[data-modal="purchase"][style*="display: flex"],
-[data-modal="purchase"][style*="display:flex"] {
-  display: flex !important;
+[data-modal-action="close"] {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
 }
 
-[data-modal="password-recovery"][style*="display: flex"],
-[data-modal="password-recovery"][style*="display:flex"] {
-  display: flex !important;
+[data-auth-tab] {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
 }
 
-/* ==================== TAB FUNCTIONALITY ==================== */
-/* Active tab state */
 [data-auth-tab].tb-active {
-  /* Designer can override this in Webflow */
-  border-bottom: 2px solid currentColor;
+  border-bottom-color: #007bff;
 }
 
-/* Show/hide tab content */
 [data-auth-tab-content] {
   display: none;
 }
@@ -37,13 +45,58 @@
   display: block;
 }
 
-/* ==================== LOADING STATES ==================== */
-/* Loading spinner animation */
+[data-form] {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+[data-field] {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+[data-form] button[type="submit"] {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+[data-form] button[type="submit"]:hover {
+  background: #0056b3;
+}
+
+[data-action="reset-password"] {
+  text-align: center;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  display: block;
+  margin-top: 10px;
+}
+
+/* Google Sign-In Button Container */
+[data-google-signin] {
+  min-height: 44px;
+  width: 100%;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Loading Spinner */
 .tb-spinner {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid currentColor;
+  border: 2px solid #ffffff;
   border-radius: 50%;
   border-top-color: transparent;
   animation: tb-spin 1s ease-in-out infinite;
@@ -54,15 +107,12 @@
   to { transform: rotate(360deg); }
 }
 
-/* Button loading state */
 .tb-loading {
   opacity: 0.7;
   cursor: not-allowed;
-  pointer-events: none;
 }
 
-/* ==================== SKELETON LOADING ==================== */
-/* Hero section skeleton shimmer effect */
+/* Hero Section Skeleton Loading */
 .tb-loading-skeleton {
   position: relative;
   pointer-events: none;
@@ -96,7 +146,6 @@
   }
 }
 
-/* Make text transparent during skeleton loading */
 .tb-loading-skeleton [data-hero-title],
 .tb-loading-skeleton [data-hero-description],
 .tb-loading-skeleton [data-hero-button-text] {
@@ -105,21 +154,94 @@
   border-radius: 4px;
 }
 
-/* ==================== VISIBILITY CONTROL ==================== */
-/* Hide elements until data loads */
+/* Purchase Modal */
+[data-modal="purchase"] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+/* Show modal when opened by JS */
+[data-modal="purchase"][style*="display: flex"],
+[data-modal="purchase"][style*="display:flex"] {
+  display: flex !important;
+}
+
+/* Password Recovery Modal */
+[data-modal="password-recovery"] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+}
+
+/* Show modal when opened by JS */
+[data-modal="password-recovery"][style*="display: flex"],
+[data-modal="password-recovery"][style*="display:flex"] {
+  display: flex !important;
+}
+
+[data-purchase-type] {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s ease;
+}
+
+[data-purchase-type]:hover {
+  background: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+}
+
+/* Accessibility: Focus trap for modals */
+[data-modal] {
+  outline: none;
+}
+
+/* Close button hover state */
+[data-modal-action="close"]:hover {
+  opacity: 0.7;
+}
+
+/* Smooth transitions */
+[data-modal] {
+  transition: opacity 0.2s ease-in-out;
+}
+
+[data-modal][style*="display: none"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-modal][style*="display: flex"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 [data-show-after-load="true"] {
-  display: none;
+  display: none;  /* ✅ JavaScript can now override */
   opacity: 0;
   visibility: hidden;
 }
-
-/* ==================== GOOGLE SIGN-IN CONTAINER ==================== */
-/* Ensure Google button renders properly */
-[data-google-signin] {
-  min-height: 44px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
