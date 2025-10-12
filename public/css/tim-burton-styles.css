@@ -1,0 +1,125 @@
+/**
+ * Tim Burton Docuseries - Critical Styles
+ * Only includes functionality-critical CSS
+ * Designer handles all visual/layout styling in Webflow
+ */
+
+/* ==================== MODAL FUNCTIONALITY ==================== */
+/* Show/hide modals (JS controls display property) */
+[data-modal="auth"][style*="display: flex"],
+[data-modal="auth"][style*="display:flex"] {
+  display: flex !important;
+}
+
+[data-modal="purchase"][style*="display: flex"],
+[data-modal="purchase"][style*="display:flex"] {
+  display: flex !important;
+}
+
+[data-modal="password-recovery"][style*="display: flex"],
+[data-modal="password-recovery"][style*="display:flex"] {
+  display: flex !important;
+}
+
+/* ==================== TAB FUNCTIONALITY ==================== */
+/* Active tab state */
+[data-auth-tab].tb-active {
+  /* Designer can override this in Webflow */
+  border-bottom: 2px solid currentColor;
+}
+
+/* Show/hide tab content */
+[data-auth-tab-content] {
+  display: none;
+}
+
+[data-auth-tab-content].tb-active {
+  display: block;
+}
+
+/* ==================== LOADING STATES ==================== */
+/* Loading spinner animation */
+.tb-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: tb-spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes tb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Button loading state */
+.tb-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== SKELETON LOADING ==================== */
+/* Hero section skeleton shimmer effect */
+.tb-loading-skeleton {
+  position: relative;
+  pointer-events: none;
+}
+
+.tb-loading-skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: tb-skeleton-shimmer 1.5s ease-in-out infinite;
+  z-index: 1;
+  border-radius: 8px;
+}
+
+@keyframes tb-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Make text transparent during skeleton loading */
+.tb-loading-skeleton [data-hero-title],
+.tb-loading-skeleton [data-hero-description],
+.tb-loading-skeleton [data-hero-button-text] {
+  color: transparent !important;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+/* ==================== VISIBILITY CONTROL ==================== */
+/* Hide elements until data loads */
+[data-show-after-load="true"] {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ==================== GOOGLE SIGN-IN CONTAINER ==================== */
+/* Ensure Google button renders properly */
+[data-google-signin] {
+  min-height: 44px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
