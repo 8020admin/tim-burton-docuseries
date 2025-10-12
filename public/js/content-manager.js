@@ -299,12 +299,7 @@ class TimBurtonContentManager {
     const hiddenElements = document.querySelectorAll('[data-show-after-load="true"]');
     if (hiddenElements.length > 0) {
       hiddenElements.forEach(element => {
-        // Get the element's computed display value before it was hidden, or default to 'block'
-        const computedDisplay = window.getComputedStyle(element).display;
-        // If display is currently 'none', we need to set it to a visible value
-        // For flex containers, use 'flex', otherwise use 'block'
-        const hasFlexClass = element.className.includes('flex') || element.className.includes('wrap');
-        element.style.display = hasFlexClass ? 'flex' : 'block';
+        element.style.display = 'block';
         element.style.visibility = 'visible';
         element.style.opacity = '1';
       });
