@@ -43,11 +43,13 @@ class UserProfileManager {
   updateProfileDisplay() {
     if (!this.currentUser) return;
 
-    // Update profile picture
-    const profileImg = document.querySelector('[data-profile-image]');
-    if (profileImg && this.currentUser.photoURL) {
-      profileImg.src = this.currentUser.photoURL;
-      profileImg.alt = `${this.currentUser.firstName || this.currentUser.displayName}'s profile picture`;
+    // Update profile picture - use querySelectorAll to update all profile images
+    const profileImgs = document.querySelectorAll('[data-profile-image="true"]');
+    if (profileImgs.length > 0 && this.currentUser.photoURL) {
+      profileImgs.forEach(img => {
+        img.src = this.currentUser.photoURL;
+        img.alt = `${this.currentUser.firstName || this.currentUser.displayName}'s profile picture`;
+      });
     }
 
     // Update name display
@@ -81,7 +83,7 @@ class UserProfileManager {
    * Hide profile display when user is not signed in
    */
   hideProfileDisplay() {
-    const profileElements = document.querySelectorAll('[data-profile-image], [data-profile-first-name], [data-profile-last-name], [data-profile-full-name], [data-profile-email]');
+    const profileElements = document.querySelectorAll('[data-profile-image="true"], [data-profile-first-name], [data-profile-last-name], [data-profile-full-name], [data-profile-email]');
     profileElements.forEach(element => {
       element.style.display = 'none';
     });
@@ -91,7 +93,7 @@ class UserProfileManager {
    * Show profile elements when user is signed in
    */
   showProfileElements() {
-    const profileElements = document.querySelectorAll('[data-profile-image], [data-profile-first-name], [data-profile-last-name], [data-profile-full-name], [data-profile-email]');
+    const profileElements = document.querySelectorAll('[data-profile-image="true"], [data-profile-first-name], [data-profile-last-name], [data-profile-full-name], [data-profile-email]');
     profileElements.forEach(element => {
       element.style.display = '';
     });
