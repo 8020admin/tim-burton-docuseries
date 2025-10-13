@@ -231,13 +231,20 @@ router.get('/history', async (req, res) => {
     const purchases = await admin.firestore()
       .collection('purchases')
       .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .get();
     
-    const purchaseList = purchases.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Sort in memory (users won't have many purchases)
+    const purchaseList = purchases.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .sort((a: any, b: any) => {
+        // Sort by createdAt descending (newest first)
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
     
     res.json({
       success: true,
