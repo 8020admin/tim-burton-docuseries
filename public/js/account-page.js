@@ -870,6 +870,48 @@ class AccountPageManager {
   }
   
   // ============================================================================
+  // UPGRADE HANDLING
+  // ============================================================================
+  
+  /**
+   * Handle upgrade CTA button click
+   * Initiates Stripe checkout for the appropriate product
+   */
+  async handleUpgradeClick() {
+    const upgradePrompt = this.getUpgradePrompt();
+    
+    if (!upgradePrompt) {
+      console.error('No upgrade available');
+      this.showError('No upgrade available at this time.');
+      return;
+    }
+    
+    const productType = upgradePrompt.to;
+    
+    console.log(`🚀 Initiating upgrade to ${productType}...`);
+    
+    try {
+      // Check if Stripe integration is available
+      if (!window.stripeIntegration) {
+        throw new Error('Stripe integration not available');
+      }
+      
+      // Initiate appropriate checkout based on product type
+      if (productType === 'regular') {
+        await window.stripeIntegration.createRegularPurchaseCheckout();
+      } else if (productType === 'boxset') {
+        await window.stripeIntegration.createBoxSetCheckout();
+      } else {
+        throw new Error(`Unknown product type: ${productType}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error initiating upgrade:', error);
+      this.showError('Failed to start upgrade. Please try again.');
+    }
+  }
+  
+  // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
   
@@ -926,6 +968,15 @@ class AccountPageManager {
         this.updatePassword();
       });
       console.log('✅ Password update handler attached');
+    }
+    
+    // Upgrade CTA Button
+    const upgradeCta = document.querySelector('[data-upgrade-cta]');
+    if (upgradeCta) {
+      upgradeCta.addEventListener('click', () => {
+        this.handleUpgradeClick();
+      });
+      console.log('✅ Upgrade CTA handler attached');
     }
   }
   

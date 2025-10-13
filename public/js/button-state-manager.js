@@ -188,20 +188,12 @@ class ButtonStateManager {
           button.textContent = 'Watch Now';
         });
       } else if (purchaseType === 'rental') {
-        // Active Rental: Show "Upgrade" on both rent and buy, show Watch Now
+        // Active Rental: Hide both rent and buy buttons (upgrades shown on /account), show Watch Now
         rentButtons.forEach(button => {
-          button.style.display = '';
-          button.textContent = 'Already Rented';
-          button.disabled = true;
-          button.style.opacity = '0.6';
-          button.style.cursor = 'not-allowed';
+          button.style.display = 'none';
         });
         buyButtons.forEach(button => {
-          button.style.display = '';
-          button.textContent = 'Buy to Keep Forever';
-          button.disabled = false;
-          button.style.opacity = '1';
-          button.style.cursor = 'pointer';
+          button.style.display = 'none';
         });
         watchNowButtons.forEach(button => {
           button.style.display = '';
