@@ -58,6 +58,9 @@ class AccountPageManager {
     console.log('✅ User authenticated:', this.user.email);
     
     await this.loadAccountData();
+    
+    // Attach event handlers to update buttons
+    this.attachEventHandlers();
   }
   
   /**
@@ -518,6 +521,44 @@ class AccountPageManager {
     } finally {
       this.isUpdating = false;
       this.hideLoadingState();
+    }
+  }
+  
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+  
+  /**
+   * Attach event handlers to update buttons
+   * Automatically called during initialization
+   */
+  attachEventHandlers() {
+    // Update First Name Button
+    const updateFirstNameBtn = document.querySelector('[data-update-first-name]');
+    if (updateFirstNameBtn) {
+      updateFirstNameBtn.addEventListener('click', () => {
+        this.updateFirstName();
+      });
+      console.log('✅ First name update handler attached');
+    }
+    
+    // Update Email Button
+    const updateEmailBtn = document.querySelector('[data-update-email]');
+    if (updateEmailBtn) {
+      updateEmailBtn.addEventListener('click', () => {
+        this.updateEmail();
+      });
+      console.log('✅ Email update handler attached');
+    }
+    
+    // Update Password Button
+    const updatePasswordBtn = document.querySelector('[data-update-password]');
+    if (updatePasswordBtn) {
+      updatePasswordBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.updatePassword();
+      });
+      console.log('✅ Password update handler attached');
     }
   }
   

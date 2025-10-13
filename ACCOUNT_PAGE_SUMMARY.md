@@ -205,12 +205,7 @@ Add profile edit form:
 ```
 
 Add event handlers:
-```javascript
-document.querySelector('[data-update-first-name]').addEventListener('click', () => {
-  window.accountPageManager.updateFirstName();
-});
-// ... etc
-```
+**✅ Event handlers automatically attached!** No custom code needed - just add the buttons with the correct `data-*` attributes and `account-page.js` handles the rest.
 
 **See `ACCOUNT_PAGE_GUIDE.md` for complete examples!**
 

@@ -204,15 +204,7 @@ Each purchase is displayed as:
 <button data-update-first-name>Save First Name</button>
 ```
 
-**JavaScript Handler:**
-
-Add this to your page (or use custom code):
-
-```javascript
-document.querySelector('[data-update-first-name]').addEventListener('click', () => {
-  window.accountPageManager.updateFirstName();
-});
-```
+**✅ Automatic!** The event handler is automatically attached by `account-page.js` - no custom code needed.
 
 ---
 
@@ -228,13 +220,7 @@ document.querySelector('[data-update-first-name]').addEventListener('click', () 
 <button data-update-email>Update Email</button>
 ```
 
-**JavaScript Handler:**
-
-```javascript
-document.querySelector('[data-update-email]').addEventListener('click', () => {
-  window.accountPageManager.updateEmail();
-});
-```
+**✅ Automatic!** The event handler is automatically attached by `account-page.js` - no custom code needed.
 
 **Important:**
 - Sends verification email to new address
@@ -263,14 +249,7 @@ document.querySelector('[data-update-email]').addEventListener('click', () => {
 </form>
 ```
 
-**JavaScript Handler:**
-
-```javascript
-document.querySelector('[data-update-password]').addEventListener('click', (e) => {
-  e.preventDefault();
-  window.accountPageManager.updatePassword();
-});
-```
+**✅ Automatic!** The event handler is automatically attached by `account-page.js` - no custom code needed.
 
 **Password Requirements (Same as Signup):**
 - Minimum 8 characters
@@ -450,35 +429,7 @@ https://pay.stripe.com/receipts/[session_id]
   <!-- Account Page Script (MUST be after auth scripts) -->
   <script src="https://tim-burton-docuseries.pages.dev/js/account-page.js"></script>
   
-  <!-- Event Handlers -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Update First Name
-      const updateFirstNameBtn = document.querySelector('[data-update-first-name]');
-      if (updateFirstNameBtn) {
-        updateFirstNameBtn.addEventListener('click', () => {
-          window.accountPageManager.updateFirstName();
-        });
-      }
-      
-      // Update Email
-      const updateEmailBtn = document.querySelector('[data-update-email]');
-      if (updateEmailBtn) {
-        updateEmailBtn.addEventListener('click', () => {
-          window.accountPageManager.updateEmail();
-        });
-      }
-      
-      // Update Password
-      const updatePasswordBtn = document.querySelector('[data-update-password]');
-      if (updatePasswordBtn) {
-        updatePasswordBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          window.accountPageManager.updatePassword();
-        });
-      }
-    });
-  </script>
+  <!-- Event handlers are automatically attached - no custom code needed! -->
 </body>
 </html>
 ```
