@@ -195,6 +195,10 @@ Create a form with these attributes:
 </form>
 ```
 
+**Note:** Passwords must meet the following requirements:
+- Minimum 8 characters, maximum 128 characters
+- At least one lowercase letter, one uppercase letter, and one number
+
 ### **Sign Up Form**
 Create a form with these attributes:
 
@@ -215,12 +219,18 @@ Create a form with these attributes:
 - Custom Attribute: `data-field` = `password`
 - Type: `password`
 - Required: Yes
+- **Password Requirements:**
+  - Minimum 8 characters
+  - Maximum 128 characters
+  - At least one lowercase letter (a-z)
+  - At least one uppercase letter (A-Z)
+  - At least one number (0-9)
 
 ```html
 <form data-form="signup">
   <input type="text" data-field="name" placeholder="First Name" required>
   <input type="email" data-field="email" placeholder="Email" required>
-  <input type="password" data-field="password" placeholder="Password" required>
+  <input type="password" data-field="password" placeholder="Password (min 8 chars, uppercase, lowercase, number)" required>
   <button type="submit">Sign Up</button>
 </form>
 ```

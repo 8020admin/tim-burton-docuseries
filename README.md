@@ -195,12 +195,21 @@ prototype/
 - ✅ Email/Password
 - ✅ Password Reset
 
+### **Password Requirements**
+All passwords must meet these security requirements:
+- **Minimum 8 characters** (maximum 128)
+- At least **one lowercase letter** (a-z)
+- At least **one uppercase letter** (A-Z)
+- At least **one number** (0-9)
+- Validated on both client and server side
+
 ### **Features**
 - ✅ Session persistence
 - ✅ Token refresh
 - ✅ Secure backend sync
 - ✅ Loading states
 - ✅ Error handling
+- ✅ Strong password validation
 
 ---
 

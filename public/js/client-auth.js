@@ -129,6 +129,49 @@ class TimBurtonAuth {
   }
   
   // ============================================================================
+  // PASSWORD VALIDATION
+  // ============================================================================
+  
+  /**
+   * Validate password strength
+   * Requirements:
+   * - Minimum 8 characters
+   * - Maximum 128 characters
+   * - At least one lowercase letter
+   * - At least one uppercase letter
+   * - At least one number
+   */
+  validatePassword(password) {
+    const errors = [];
+    
+    if (!password) {
+      errors.push('Password is required');
+      return { isValid: false, errors };
+    }
+    
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+    if (password.length > 128) {
+      errors.push('Password is too long (maximum 128 characters)');
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+  
+  // ============================================================================
   // AUTHENTICATION HANDLERS
   // ============================================================================
   
@@ -230,6 +273,15 @@ class TimBurtonAuth {
         throw new Error('Firebase Auth not initialized');
       }
       
+      // Validate password strength before attempting signup
+      const passwordValidation = this.validatePassword(password);
+      if (!passwordValidation.isValid) {
+        const errorMessage = passwordValidation.errors.join('. ');
+        console.log('❌ Password validation failed:', passwordValidation.errors);
+        this.dispatchAuthEvent('signUpError', { error: errorMessage });
+        return { success: false, error: errorMessage };
+      }
+      
       // Store user data to pass to backend during session sync
       this.pendingUserData = {
         firstName: firstName || '',
@@ -256,7 +308,7 @@ class TimBurtonAuth {
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address';
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak (minimum 6 characters)';
+        errorMessage = 'Password must be at least 8 characters and include uppercase, lowercase, and a number';
       }
       
       this.dispatchAuthEvent('signUpError', { error: errorMessage });

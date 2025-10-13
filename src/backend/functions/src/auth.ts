@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as express from 'express';
+import { validatePassword } from './validation';
 
 const router = express.Router();
 
@@ -138,6 +139,39 @@ router.post('/session', async (req, res) => {
     res.status(statusCode).json({
       success: false,
       error: errorMessage
+    });
+  }
+});
+
+/**
+ * VALIDATE PASSWORD
+ * Endpoint to validate password strength before account creation
+ * This provides server-side validation as an additional safety layer
+ */
+router.post('/validate-password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required'
+      });
+    }
+    
+    const validation = validatePassword(password);
+    
+    return res.json({
+      success: validation.isValid,
+      isValid: validation.isValid,
+      errors: validation.errors
+    });
+    
+  } catch (error) {
+    console.error('❌ Password validation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Password validation failed'
     });
   }
 });
