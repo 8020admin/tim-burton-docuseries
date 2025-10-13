@@ -1180,7 +1180,252 @@ All core features are deployed and functional:
 
 ---
 
-## 🎓 **19. Need Help?**
+## 👤 **14. Account Page Integration**
+
+### **Overview**
+
+The account page displays user profile information, purchase history, and allows profile updates. It automatically redirects non-authenticated users to the homepage.
+
+**Features:**
+- ✅ Auto-redirect for non-authenticated users
+- ✅ Profile display (name, email, photo)
+- ✅ Purchase history with receipt downloads
+- ✅ Edit first name, email, and password
+- ✅ Automatic event handler attachment
+
+---
+
+### **Required Script**
+
+Add to your Webflow account page **Settings → Custom Code → Before `</body>`**:
+
+```html
+<script src="https://tim-burton-docuseries.pages.dev/js/account-page.js"></script>
+```
+
+**Important:** This script must load AFTER the auth scripts (client-auth.js).
+
+---
+
+### **Authentication Protection**
+
+**✅ Automatic!** The account page automatically redirects non-authenticated users to the homepage after 1 second.
+
+**Optional: Show Redirect Message**
+
+```html
+<div data-account-message style="display: none;">
+  <!-- Message appears here before redirect -->
+</div>
+```
+
+---
+
+### **Profile Display**
+
+**Profile Image:**
+```html
+<img data-profile-image src="" alt="Profile picture" />
+```
+
+**First Name (Display):**
+```html
+<div data-profile-first-name>User</div>
+```
+
+**First Name (Edit):**
+```html
+<input type="text" data-profile-first-name placeholder="First Name" />
+```
+
+**Email Display:**
+```html
+<div data-profile-email-display>email@example.com</div>
+```
+
+**Email Edit:**
+```html
+<input type="email" data-profile-email-input placeholder="New Email" />
+```
+
+---
+
+### **Purchase History**
+
+**Container (Auto-Populated):**
+```html
+<div data-purchase-history>
+  <!-- Purchase items automatically inserted here -->
+</div>
+```
+
+**What's Displayed:**
+- Product name (Rental, Regular, or Box Set)
+- Purchase date
+- Amount paid ($XX.XX USD)
+- Rental expiration (if applicable)
+- "Download Receipt" button for each purchase
+
+**If no purchases:** Shows "No purchases yet."
+
+---
+
+### **Profile Updates**
+
+All update buttons automatically attach event handlers - no custom code needed!
+
+**Update First Name:**
+```html
+<input type="text" data-profile-first-name />
+<button data-update-first-name>Save Name</button>
+```
+
+**Update Email:**
+```html
+<input type="email" data-profile-email-input />
+<button data-update-email>Update Email</button>
+```
+
+**Update Password:**
+```html
+<form data-form="update-password">
+  <input type="password" data-current-password placeholder="Current Password" required />
+  <input type="password" data-new-password placeholder="New Password" required />
+  <input type="password" data-confirm-password placeholder="Confirm Password" required />
+  <button type="submit" data-update-password>Update Password</button>
+</form>
+```
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+
+---
+
+### **Feedback Messages**
+
+**Loading State:**
+```html
+<div data-account-loading style="display: none;">Loading...</div>
+```
+
+**Success Messages:**
+```html
+<div data-account-success style="display: none;"></div>
+```
+
+**Error Messages:**
+```html
+<div data-account-error style="display: none;"></div>
+```
+
+---
+
+### **Complete Account Page Example**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Account</title>
+  
+  <!-- Firebase & Auth Scripts (in Project Settings → Head Code) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://tim-burton-docuseries.pages.dev/js/client-auth.js"></script>
+</head>
+<body>
+  
+  <!-- Feedback Messages -->
+  <div data-account-loading style="display: none;">Loading...</div>
+  <div data-account-success style="display: none;"></div>
+  <div data-account-error style="display: none;"></div>
+  
+  <!-- Profile Section -->
+  <section class="profile">
+    <h2>Your Profile</h2>
+    <img data-profile-image src="" alt="Profile" />
+    
+    <!-- Edit First Name -->
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" data-profile-first-name />
+      <button data-update-first-name>Save</button>
+    </div>
+    
+    <!-- Email Display -->
+    <div class="form-group">
+      <label>Current Email</label>
+      <div data-profile-email-display></div>
+    </div>
+    
+    <!-- Edit Email -->
+    <div class="form-group">
+      <label>New Email</label>
+      <input type="email" data-profile-email-input />
+      <button data-update-email>Update Email</button>
+    </div>
+  </section>
+  
+  <!-- Password Update -->
+  <section class="password">
+    <h2>Change Password</h2>
+    <form data-form="update-password">
+      <input type="password" data-current-password placeholder="Current Password" required />
+      <input type="password" data-new-password placeholder="New Password" required />
+      <input type="password" data-confirm-password placeholder="Confirm Password" required />
+      <button type="submit" data-update-password>Update Password</button>
+    </form>
+  </section>
+  
+  <!-- Purchase History -->
+  <section class="purchases">
+    <h2>Purchase History</h2>
+    <div data-purchase-history></div>
+  </section>
+  
+  <!-- Account Page Script (Page Settings → Before </body>) -->
+  <script src="https://tim-burton-docuseries.pages.dev/js/account-page.js"></script>
+</body>
+</html>
+```
+
+---
+
+### **Account Page Attributes Reference**
+
+| Attribute | Element | Purpose |
+|-----------|---------|---------|
+| `data-account-message` | `<div>` | Redirect message |
+| `data-account-loading` | `<div>` | Loading state |
+| `data-account-success` | `<div>` | Success messages |
+| `data-account-error` | `<div>` | Error messages |
+| `data-profile-image` | `<img>` | Profile photo |
+| `data-profile-first-name` | `<input>` or `<div>` | First name (edit/display) |
+| `data-profile-email-display` | `<div>` | Email display |
+| `data-profile-email-input` | `<input>` | Email edit |
+| `data-current-password` | `<input>` | Current password |
+| `data-new-password` | `<input>` | New password |
+| `data-confirm-password` | `<input>` | Confirm password |
+| `data-update-first-name` | `<button>` | Save name button |
+| `data-update-email` | `<button>` | Update email button |
+| `data-update-password` | `<button>` | Update password button |
+| `data-purchase-history` | `<div>` | Purchase container |
+
+---
+
+### **Testing the Account Page**
+
+1. **Test Redirect:** Sign out → Visit `/account` → Should redirect to homepage
+2. **Test Display:** Sign in → Visit `/account` → See profile and purchases
+3. **Test Updates:** Edit name/email/password → Changes save successfully
+4. **Test Receipts:** Click "Download Receipt" → Opens Stripe receipt
+
+---
+
+## 🎓 **15. Need Help?**
 
 If you need to add a new interaction:
 1. Choose a semantic attribute name (e.g., `data-my-feature`)
