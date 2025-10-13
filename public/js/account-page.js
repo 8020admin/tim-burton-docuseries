@@ -501,6 +501,8 @@ class AccountPageManager {
         errorMessage = 'This email is already in use by another account.';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email updates are currently disabled. Please contact support.';
       }
       
       this.showError(errorMessage);
