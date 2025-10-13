@@ -1315,6 +1315,131 @@ Each purchase item is automatically created with the following attributes for **
 
 ---
 
+### **Current Product Display**
+
+The account page automatically determines the user's current product based on purchase hierarchy and displays it.
+
+**Product Hierarchy (Highest to Lowest):**
+1. **Box Set** (Tier 3) - Highest
+2. **Regular Purchase** (Tier 2)
+3. **Rental** (Tier 1) - Lowest
+
+**If a user has purchased multiple products, only the highest tier is displayed as their "current product".**
+
+**Attributes:**
+
+```html
+<!-- Product Name -->
+<div data-current-product-name>Tim Burton Docuseries - Regular Purchase</div>
+
+<!-- Product Description -->
+<div data-current-product-description>Permanent access to 4 episodes</div>
+
+<!-- Product Type (rental, regular, boxset, or "none") -->
+<div data-current-product-type>regular</div>
+
+<!-- Product Tier (0 = no product, 1 = rental, 2 = regular, 3 = boxset) -->
+<div data-current-product-tier>2</div>
+
+<!-- Expiration Date (only shown for active rentals) -->
+<div data-current-product-expires style="display: none;">Expires: 12/25/2024</div>
+```
+
+**What Gets Displayed:**
+
+| User Has | Displayed Product | Type | Tier |
+|----------|------------------|------|------|
+| Nothing | "No active product" | `none` | `0` |
+| Active Rental | Tim Burton Docuseries - Rental | `rental` | `1` |
+| Regular Purchase | Tim Burton Docuseries - Regular Purchase | `regular` | `2` |
+| Box Set | Tim Burton Docuseries - Box Set | `boxset` | `3` |
+| Rental + Regular | Regular Purchase (higher tier) | `regular` | `2` |
+| Regular + Box Set | Box Set (highest tier) | `boxset` | `3` |
+
+**Note:** Expired rentals are not considered "active" and won't be displayed as the current product.
+
+---
+
+### **Upgrade Prompts**
+
+The system automatically determines which upgrade to offer based on the user's current product:
+
+**Upgrade Logic:**
+
+| Current Product | Upgrade Offered | Price | Savings |
+|----------------|-----------------|-------|---------|
+| **Rental** | Regular Purchase | $24.99 | $0 (same price they paid) |
+| **Regular** | Box Set | $49.99 | **$25 off** (regular price: $74.99) |
+| **Box Set** | No upgrade (highest tier) | - | - |
+
+**Container (Auto-Hidden if no upgrade available):**
+```html
+<div data-upgrade-prompt style="display: none;">
+  <!-- Upgrade prompt content here -->
+</div>
+```
+
+**Upgrade Prompt Attributes:**
+
+```html
+<div data-upgrade-prompt style="display: none;">
+  <h3>Upgrade to <span data-upgrade-product-name>Box Set</span></h3>
+  
+  <p data-upgrade-description>
+    Upgrade to get 40 hours of exclusive bonus content
+  </p>
+  
+  <div class="pricing">
+    <!-- Current upgrade price -->
+    <span class="price" data-upgrade-price>$49.99</span>
+    
+    <!-- Original price (with strikethrough styling) -->
+    <span class="original-price" data-upgrade-full-price style="display: none;">$74.99</span>
+    
+    <!-- Savings badge (hidden if no savings) -->
+    <span class="savings" data-upgrade-savings style="display: none;">Save $25.00!</span>
+  </div>
+  
+  <!-- CTA Button (data-product-type is automatically set) -->
+  <button data-upgrade-cta data-product-type="boxset">
+    Upgrade to Box Set
+  </button>
+</div>
+```
+
+**Automatic Behavior:**
+
+1. **Container Visibility:** The `data-upgrade-prompt` container is automatically shown/hidden based on whether an upgrade is available.
+2. **Product Type:** The CTA button (`data-upgrade-cta`) automatically gets the correct `data-product-type` attribute for Stripe integration.
+3. **Pricing Display:**
+   - For **Rental → Regular**: No savings shown (same price)
+   - For **Regular → Box Set**: Shows original price ($74.99) with strikethrough and savings badge ("Save $25!")
+4. **No Upgrade:** If user has Box Set (highest tier), the entire prompt is hidden.
+
+**Example for Rental User:**
+```html
+<div data-upgrade-prompt style="display: block;">
+  <h3>Upgrade to <span data-upgrade-product-name>Regular Purchase</span></h3>
+  <p data-upgrade-description>Upgrade to permanent access for the same price you paid</p>
+  <span data-upgrade-price>$24.99</span>
+  <button data-upgrade-cta data-product-type="regular">Upgrade to Permanent Access</button>
+</div>
+```
+
+**Example for Regular User:**
+```html
+<div data-upgrade-prompt style="display: block;">
+  <h3>Upgrade to <span data-upgrade-product-name>Box Set</span></h3>
+  <p data-upgrade-description>Upgrade to get 40 hours of exclusive bonus content</p>
+  <span data-upgrade-price>$49.99</span>
+  <span data-upgrade-full-price style="display: inline;">$74.99</span>
+  <span data-upgrade-savings style="display: block;">Save $25.00!</span>
+  <button data-upgrade-cta data-product-type="boxset">Upgrade to Box Set</button>
+</div>
+```
+
+---
+
 ### **Profile Updates**
 
 All update buttons automatically attach event handlers - no custom code needed!
@@ -1443,10 +1568,12 @@ All update buttons automatically attach event handlers - no custom code needed!
 
 | Attribute | Element | Purpose |
 |-----------|---------|---------|
+| **General** |||
 | `data-account-message` | `<div>` | Redirect message |
 | `data-account-loading` | `<div>` | Loading state |
 | `data-account-success` | `<div>` | Success messages |
 | `data-account-error` | `<div>` | Error messages |
+| **Profile** |||
 | `data-profile-image` | `<img>` | Profile photo |
 | `data-profile-first-name` | `<input>` or `<div>` | First name (edit/display) |
 | `data-profile-email-display` | `<div>` | Email display |
@@ -1457,6 +1584,21 @@ All update buttons automatically attach event handlers - no custom code needed!
 | `data-update-first-name` | `<button>` | Save name button |
 | `data-update-email` | `<button>` | Update email button |
 | `data-update-password` | `<button>` | Update password button |
+| **Current Product** |||
+| `data-current-product-name` | `<div>` | Current product name |
+| `data-current-product-description` | `<div>` | Current product description |
+| `data-current-product-type` | `<div>` | Product type (rental/regular/boxset/none) |
+| `data-current-product-tier` | `<div>` | Product tier (0-3) |
+| `data-current-product-expires` | `<div>` | Expiration date (rentals only) |
+| **Upgrade Prompt** |||
+| `data-upgrade-prompt` | `<div>` | Upgrade prompt container |
+| `data-upgrade-product-name` | `<span>` | Upgrade product name |
+| `data-upgrade-description` | `<p>` | Upgrade description |
+| `data-upgrade-price` | `<span>` | Upgrade price |
+| `data-upgrade-full-price` | `<span>` | Original price (with strikethrough) |
+| `data-upgrade-savings` | `<span>` | Savings amount |
+| `data-upgrade-cta` | `<button>` | Upgrade CTA button |
+| **Purchase History** |||
 | `data-purchase-history` | `<div>` | Purchase container |
 | `data-purchase-item` | `<div>` | Individual purchase wrapper |
 | `data-purchase-product-name` | `<div>` | Product name |

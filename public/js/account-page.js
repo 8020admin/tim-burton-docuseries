@@ -209,6 +209,8 @@ class AccountPageManager {
       if (result.success) {
         this.purchases = result.purchases;
         this.displayPurchaseHistory();
+        this.displayCurrentProduct();
+        this.displayUpgradePrompt();
       } else {
         throw new Error(result.error || 'Failed to load purchase history');
       }
@@ -319,6 +321,246 @@ class AccountPageManager {
       console.error('❌ Error downloading receipt:', error);
       this.showError('Failed to download receipt. Please contact support.');
     }
+  }
+  
+  // ============================================================================
+  // PRODUCT HIERARCHY & UPGRADE PROMPTS
+  // ============================================================================
+  
+  /**
+   * Determine the user's current product based on purchase hierarchy
+   * Hierarchy: Box Set > Regular > Rental
+   * Returns the highest tier product the user owns
+   */
+  getCurrentProduct() {
+    if (!this.purchases || this.purchases.length === 0) {
+      return null;
+    }
+    
+    // Check for active rentals (not expired)
+    const now = new Date();
+    const activeRentals = this.purchases.filter(p => {
+      if (p.productType !== 'rental') return false;
+      if (!p.expiresAt) return false;
+      const expiresAt = new Date(p.expiresAt._seconds * 1000);
+      return now <= expiresAt;
+    });
+    
+    // Check for permanent products (boxset > regular)
+    const hasBoxSet = this.purchases.some(p => p.productType === 'boxset');
+    const hasRegular = this.purchases.some(p => p.productType === 'regular');
+    
+    // Return highest tier
+    if (hasBoxSet) {
+      return {
+        type: 'boxset',
+        name: this.products.boxset.name,
+        description: this.products.boxset.description,
+        tier: 3
+      };
+    }
+    
+    if (hasRegular) {
+      return {
+        type: 'regular',
+        name: this.products.regular.name,
+        description: this.products.regular.description,
+        tier: 2
+      };
+    }
+    
+    if (activeRentals.length > 0) {
+      // Find the rental that expires latest
+      const latestRental = activeRentals.reduce((latest, current) => {
+        const latestExpires = new Date(latest.expiresAt._seconds * 1000);
+        const currentExpires = new Date(current.expiresAt._seconds * 1000);
+        return currentExpires > latestExpires ? current : latest;
+      });
+      
+      const expiresAt = new Date(latestRental.expiresAt._seconds * 1000);
+      
+      return {
+        type: 'rental',
+        name: this.products.rental.name,
+        description: this.products.rental.description,
+        tier: 1,
+        expiresAt: expiresAt,
+        expiresAtFormatted: expiresAt.toLocaleDateString()
+      };
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Display the current product in the UI
+   */
+  displayCurrentProduct() {
+    const currentProduct = this.getCurrentProduct();
+    
+    // Update product name
+    const nameEl = document.querySelector('[data-current-product-name]');
+    if (nameEl) {
+      if (currentProduct) {
+        nameEl.textContent = currentProduct.name;
+      } else {
+        nameEl.textContent = 'No active product';
+      }
+    }
+    
+    // Update product description
+    const descEl = document.querySelector('[data-current-product-description]');
+    if (descEl) {
+      if (currentProduct) {
+        descEl.textContent = currentProduct.description;
+      } else {
+        descEl.textContent = 'Purchase a product to start watching';
+      }
+    }
+    
+    // Update product type
+    const typeEl = document.querySelector('[data-current-product-type]');
+    if (typeEl) {
+      if (currentProduct) {
+        typeEl.textContent = currentProduct.type;
+      } else {
+        typeEl.textContent = 'none';
+      }
+    }
+    
+    // Update expiration date (for rentals only)
+    const expiresEl = document.querySelector('[data-current-product-expires]');
+    if (expiresEl) {
+      if (currentProduct && currentProduct.type === 'rental' && currentProduct.expiresAtFormatted) {
+        expiresEl.textContent = `Expires: ${currentProduct.expiresAtFormatted}`;
+        expiresEl.style.display = 'block';
+      } else {
+        expiresEl.style.display = 'none';
+      }
+    }
+    
+    // Update tier (for conditional visibility in Webflow)
+    const tierEl = document.querySelector('[data-current-product-tier]');
+    if (tierEl) {
+      if (currentProduct) {
+        tierEl.textContent = currentProduct.tier.toString();
+      } else {
+        tierEl.textContent = '0';
+      }
+    }
+    
+    console.log('✅ Current product displayed:', currentProduct);
+  }
+  
+  /**
+   * Determine which upgrade prompt to show (if any)
+   */
+  getUpgradePrompt() {
+    const currentProduct = this.getCurrentProduct();
+    
+    if (!currentProduct) {
+      // No product - could show "Get Started" prompt
+      return null;
+    }
+    
+    if (currentProduct.type === 'boxset') {
+      // Already has highest tier
+      return null;
+    }
+    
+    if (currentProduct.type === 'regular') {
+      // Prompt to upgrade to Box Set (discounted)
+      return {
+        from: 'regular',
+        to: 'boxset',
+        productName: 'Box Set',
+        fullPrice: 74.99,
+        upgradePrice: 49.99,
+        savings: 25.00,
+        description: 'Upgrade to get 40 hours of exclusive bonus content',
+        ctaText: 'Upgrade to Box Set'
+      };
+    }
+    
+    if (currentProduct.type === 'rental') {
+      // Prompt to upgrade to Regular (same price)
+      return {
+        from: 'rental',
+        to: 'regular',
+        productName: 'Regular Purchase',
+        fullPrice: 24.99,
+        upgradePrice: 24.99,
+        savings: 0,
+        description: 'Upgrade to permanent access for the same price you paid',
+        ctaText: 'Upgrade to Permanent Access'
+      };
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Display the upgrade prompt in the UI
+   */
+  displayUpgradePrompt() {
+    const upgradePrompt = this.getUpgradePrompt();
+    
+    // Show/hide upgrade prompt container
+    const promptContainer = document.querySelector('[data-upgrade-prompt]');
+    if (promptContainer) {
+      if (upgradePrompt) {
+        promptContainer.style.display = 'block';
+      } else {
+        promptContainer.style.display = 'none';
+        return;
+      }
+    }
+    
+    // Update upgrade prompt content
+    const productNameEl = document.querySelector('[data-upgrade-product-name]');
+    if (productNameEl && upgradePrompt) {
+      productNameEl.textContent = upgradePrompt.productName;
+    }
+    
+    const descriptionEl = document.querySelector('[data-upgrade-description]');
+    if (descriptionEl && upgradePrompt) {
+      descriptionEl.textContent = upgradePrompt.description;
+    }
+    
+    const priceEl = document.querySelector('[data-upgrade-price]');
+    if (priceEl && upgradePrompt) {
+      priceEl.textContent = `$${upgradePrompt.upgradePrice.toFixed(2)}`;
+    }
+    
+    const fullPriceEl = document.querySelector('[data-upgrade-full-price]');
+    if (fullPriceEl && upgradePrompt) {
+      if (upgradePrompt.savings > 0) {
+        fullPriceEl.textContent = `$${upgradePrompt.fullPrice.toFixed(2)}`;
+        fullPriceEl.style.display = 'inline';
+      } else {
+        fullPriceEl.style.display = 'none';
+      }
+    }
+    
+    const savingsEl = document.querySelector('[data-upgrade-savings]');
+    if (savingsEl && upgradePrompt) {
+      if (upgradePrompt.savings > 0) {
+        savingsEl.textContent = `Save $${upgradePrompt.savings.toFixed(2)}!`;
+        savingsEl.style.display = 'block';
+      } else {
+        savingsEl.style.display = 'none';
+      }
+    }
+    
+    const ctaEl = document.querySelector('[data-upgrade-cta]');
+    if (ctaEl && upgradePrompt) {
+      ctaEl.textContent = upgradePrompt.ctaText;
+      
+      // Set data attribute for product type (for Stripe integration)
+      ctaEl.setAttribute('data-product-type', upgradePrompt.to);
+    }
+    
+    console.log('✅ Upgrade prompt displayed:', upgradePrompt);
   }
   
   // ============================================================================
