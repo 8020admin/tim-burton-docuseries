@@ -221,7 +221,16 @@ router.get('/history', async (req, res) => {
 });
 // Get receipt URL
 router.get('/receipt/:purchaseId', async (req, res) => {
+    var _a, _b, _c;
     try {
+        // Require auth
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, error: 'Authorization token required' });
+        }
+        const token = authHeader.split(' ')[1];
+        const decoded = await admin.auth().verifyIdToken(token);
+        const requestingUserId = decoded.uid;
         const { purchaseId } = req.params;
         // Get purchase record
         const purchaseDoc = await admin.firestore()
@@ -235,8 +244,47 @@ router.get('/receipt/:purchaseId', async (req, res) => {
             });
         }
         const purchase = purchaseDoc.data();
-        // Generate Stripe receipt URL
-        const receiptUrl = `https://pay.stripe.com/receipts/${purchase === null || purchase === void 0 ? void 0 : purchase.stripeSessionId}`;
+        // Only allow owner to fetch receipt
+        if (!purchase || purchase.userId !== requestingUserId) {
+            return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
+        // Prefer the Stripe-hosted receipt URL from the Payment Intent if present
+        let receiptUrl = null;
+        if (purchase.stripePaymentIntentId) {
+            try {
+                const Stripe = (await Promise.resolve().then(() => require('stripe'))).default;
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+                const pi = await stripe.paymentIntents.retrieve(purchase.stripePaymentIntentId, { expand: ['charges'] });
+                let charge = (((_a = pi === null || pi === void 0 ? void 0 : pi.charges) === null || _a === void 0 ? void 0 : _a.data) && pi.charges.data[0]) || undefined;
+                // If charges array empty, try latest_charge
+                if (!charge && (pi === null || pi === void 0 ? void 0 : pi.latest_charge)) {
+                    try {
+                        const chargeObj = await stripe.charges.retrieve(pi.latest_charge);
+                        charge = chargeObj;
+                    }
+                    catch (ce) {
+                        console.error('Error retrieving latest_charge:', ce);
+                    }
+                }
+                receiptUrl = (charge === null || charge === void 0 ? void 0 : charge.receipt_url) || null;
+            }
+            catch (e) {
+                console.error('Error retrieving Stripe receipt URL:', e);
+            }
+        }
+        // Fallback: derive PaymentIntent from Checkout Session if PI was not stored on older purchases
+        if (!receiptUrl && purchase.stripeSessionId) {
+            try {
+                const Stripe = (await Promise.resolve().then(() => require('stripe'))).default;
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+                const session = await stripe.checkout.sessions.retrieve(purchase.stripeSessionId, { expand: ['payment_intent', 'payment_intent.charges'] });
+                const charge = (((_c = (_b = session === null || session === void 0 ? void 0 : session.payment_intent) === null || _b === void 0 ? void 0 : _b.charges) === null || _c === void 0 ? void 0 : _c.data) && session.payment_intent.charges.data[0]) || undefined;
+                receiptUrl = (charge === null || charge === void 0 ? void 0 : charge.receipt_url) || null;
+            }
+            catch (e) {
+                console.error('Error retrieving receipt via Checkout Session fallback:', e);
+            }
+        }
         res.json({
             success: true,
             receiptUrl: receiptUrl

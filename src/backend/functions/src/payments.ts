@@ -300,17 +300,34 @@ router.get('/receipt/:purchaseId', async (req, res) => {
       try {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
-        const pi = await stripe.paymentIntents.retrieve(purchase.stripePaymentIntentId, { expand: ['charges'] });
-        const charge = (pi.charges?.data && pi.charges.data[0]) || undefined;
+        const pi: any = await stripe.paymentIntents.retrieve(purchase.stripePaymentIntentId, { expand: ['charges'] });
+        let charge = (pi?.charges?.data && pi.charges.data[0]) || undefined;
+        // If charges array empty, try latest_charge
+        if (!charge && pi?.latest_charge) {
+          try {
+            const chargeObj: any = await stripe.charges.retrieve(pi.latest_charge as string);
+            charge = chargeObj;
+          } catch (ce) {
+            console.error('Error retrieving latest_charge:', ce);
+          }
+        }
         receiptUrl = charge?.receipt_url || null;
       } catch (e) {
         console.error('Error retrieving Stripe receipt URL:', e);
       }
     }
     
-    // Fallback to a session-based URL if needed (may not always work)
+    // Fallback: derive PaymentIntent from Checkout Session if PI was not stored on older purchases
     if (!receiptUrl && purchase.stripeSessionId) {
-      receiptUrl = `https://dashboard.stripe.com/payments/${purchase.stripeSessionId}`;
+      try {
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
+        const session: any = await stripe.checkout.sessions.retrieve(purchase.stripeSessionId, { expand: ['payment_intent', 'payment_intent.charges'] });
+        const charge = (session?.payment_intent?.charges?.data && session.payment_intent.charges.data[0]) || undefined;
+        receiptUrl = charge?.receipt_url || null;
+      } catch (e) {
+        console.error('Error retrieving receipt via Checkout Session fallback:', e);
+      }
     }
     
     res.json({
