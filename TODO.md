@@ -6,22 +6,13 @@
 
 ## 🔴 High Priority
 
-### **1. Enable Stripe Automatic Receipt Emails**
-**Status:** Pending  
-**Effort:** 5 minutes  
-
-**Action Required:**
-1. Go to [Stripe Dashboard → Settings → Emails](https://dashboard.stripe.com/settings/emails)
-2. Enable "Successful payments" emails
-3. Customers will automatically receive receipt emails after purchase
-
-**Why:** Users currently need to manually download receipts from the account page. Automatic emails provide better UX.
+_No high priority tasks at this time._
 
 ---
 
 ## 🟡 Medium Priority
 
-### **2. Add New Product: Box Set Upgrade (Discounted Price)**
+### **1. Add New Product: Box Set Upgrade (Discounted Price)**
 **Status:** Pending  
 **Effort:** 2-3 hours  
 **Reference:** `PRODUCT_MANAGEMENT_GUIDE.md`
@@ -57,7 +48,7 @@ Create an upgrade path for users who purchased the Regular edition to upgrade to
 
 ---
 
-### **3. Consider Initials Avatar for Email/Password Users**
+### **2. Consider Initials Avatar for Email/Password Users**
 **Status:** Optional/Nice-to-have  
 **Effort:** 15-20 minutes  
 
@@ -88,7 +79,7 @@ if (photoEl) {
 
 ## 🔵 Low Priority / Future Considerations
 
-### **4. Email Update Functionality**
+### **3. Email Update Functionality**
 **Status:** Disabled (Firebase restriction)  
 **Effort:** Investigation required  
 
@@ -104,7 +95,7 @@ Email updates are currently disabled because Firebase returns `auth/operation-no
 
 ---
 
-### **5. Add More Products**
+### **4. Add More Products**
 **Status:** As needed  
 **Reference:** `PRODUCT_MANAGEMENT_GUIDE.md`
 
@@ -119,6 +110,11 @@ Follow the comprehensive guide in `PRODUCT_MANAGEMENT_GUIDE.md`:
 ---
 
 ## ✅ Recently Completed
+
+### Stripe Receipt Emails _(Dec 2024)_
+- ✅ Enabled automatic receipt emails in Stripe Dashboard
+- ✅ Customers now receive email receipts immediately after purchase
+- ✅ "Download Receipt" button on `/account` remains as backup option
 
 ### Account Page Improvements _(Dec 2024)_
 - ✅ Fixed first name input prefill (multiple elements issue)
