@@ -325,8 +325,16 @@ class AccountPageManager {
   /**
    * Update first name
    */
-  async updateFirstName() {
-    const firstNameInput = document.querySelector('[data-profile-first-name]');
+  async updateFirstName(sourceButton) {
+    // Prefer explicit attribute
+    let firstNameInput = document.querySelector('[data-profile-first-name]');
+    
+    // Fallback: try to find a nearby input next to the triggering button
+    if ((!firstNameInput || firstNameInput.tagName !== 'INPUT') && sourceButton && sourceButton.closest) {
+      const scope = sourceButton.closest('form, section, .form-group, .w-form, div') || document;
+      firstNameInput = scope.querySelector('input[data-profile-first-name], input[type="text"], input');
+    }
+    
     if (!firstNameInput || firstNameInput.tagName !== 'INPUT') {
       console.error('First name input not found');
       return;
@@ -559,9 +567,31 @@ class AccountPageManager {
     const updateFirstNameBtn = document.querySelector('[data-update-first-name]');
     if (updateFirstNameBtn) {
       updateFirstNameBtn.addEventListener('click', () => {
-        this.updateFirstName();
+        this.updateFirstName(updateFirstNameBtn);
       });
       console.log('✅ First name update handler attached');
+    }
+    
+    // First name input: update on blur/Enter as a UX enhancement
+    const firstNameInput = document.querySelector('[data-profile-first-name]');
+    if (firstNameInput && (firstNameInput.tagName === 'INPUT' || firstNameInput.tagName === 'TEXTAREA')) {
+      // Blur
+      firstNameInput.addEventListener('blur', () => {
+        const value = (firstNameInput.value || '').trim();
+        if (value && value !== (this.user.firstName || '')) {
+          this.updateFirstName(updateFirstNameBtn || firstNameInput);
+        }
+      });
+      // Enter key
+      firstNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = (firstNameInput.value || '').trim();
+          if (value && value !== (this.user.firstName || '')) {
+            this.updateFirstName(updateFirstNameBtn || firstNameInput);
+          }
+        }
+      });
     }
     
     // Update Email Button
