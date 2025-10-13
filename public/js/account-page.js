@@ -429,6 +429,7 @@ class AccountPageManager {
   /**
    * Update email
    * Uses Firebase Auth updateEmail()
+   * Note: Email updates are disabled for this project - users cannot change their email
    */
   async updateEmail() {
     const emailInput = document.querySelector('[data-profile-email-input]');
@@ -457,6 +458,11 @@ class AccountPageManager {
       return;
     }
     
+    // Show message that email updates are not supported
+    this.showError('Email updates are not available. If you need to change your email, please contact support.');
+    return;
+    
+    /* Email update functionality disabled - Firebase configuration does not allow it
     try {
       this.isUpdating = true;
       
@@ -514,6 +520,7 @@ class AccountPageManager {
     } finally {
       this.isUpdating = false;
     }
+    */
   }
   
   /**
