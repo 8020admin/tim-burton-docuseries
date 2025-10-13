@@ -43,13 +43,17 @@ class TimBurtonVideoPlayer {
    */
   initializeChromecast() {
     window['__onGCastApiAvailable'] = (isAvailable) => {
-      if (isAvailable) {
-        cast.framework.CastContext.getInstance().setOptions({
-          receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-        });
-        
-        console.log('✅ Chromecast initialized');
+      if (isAvailable && window.cast && window.chrome && window.chrome.cast) {
+        try {
+          cast.framework.CastContext.getInstance().setOptions({
+            receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+          });
+          
+          console.log('✅ Chromecast initialized');
+        } catch (error) {
+          console.warn('⚠️ Chromecast initialization failed:', error.message);
+        }
       }
     };
   }
@@ -275,11 +279,16 @@ class TimBurtonVideoPlayer {
     this.currentVideoUrl = hlsUrl;
 
     // Check if casting to Chromecast
-    if (window.cast && cast.framework) {
-      const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-      if (castSession) {
-        this.loadOnChromecast(hlsUrl);
-        return;
+    if (window.cast && window.cast.framework) {
+      try {
+        const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+        if (castSession) {
+          this.loadOnChromecast(hlsUrl);
+          return;
+        }
+      } catch (error) {
+        console.warn('⚠️ Chromecast check failed:', error.message);
+        // Continue with normal playback
       }
     }
 
@@ -343,29 +352,39 @@ class TimBurtonVideoPlayer {
    * Load video on Chromecast
    */
   loadOnChromecast(hlsUrl) {
-    const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-    if (!castSession) return;
+    if (!window.cast || !window.chrome || !window.chrome.cast) {
+      console.warn('⚠️ Chromecast SDK not available');
+      return;
+    }
 
-    const mediaInfo = new chrome.cast.media.MediaInfo(hlsUrl, 'application/x-mpegurl');
-    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-    mediaInfo.metadata.title = this.currentVideoTitle || 'Tim Burton Docuseries';
-    
-    const request = new chrome.cast.media.LoadRequest(mediaInfo);
-    request.currentTime = this.videoElement.currentTime || 0;
-    request.autoplay = true;
+    try {
+      const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+      if (!castSession) return;
 
-    castSession.loadMedia(request).then(
-      () => {
-        console.log('✅ Media loaded on Chromecast');
-        this.hideLoading();
-        // Hide local video, show casting message
-        this.videoElement.style.display = 'none';
-      },
-      (errorCode) => {
-        console.error('❌ Chromecast load error:', errorCode);
-        this.showError('Failed to cast to Chromecast');
-      }
-    );
+      const mediaInfo = new chrome.cast.media.MediaInfo(hlsUrl, 'application/x-mpegurl');
+      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+      mediaInfo.metadata.title = this.currentVideoTitle || 'Tim Burton Docuseries';
+      
+      const request = new chrome.cast.media.LoadRequest(mediaInfo);
+      request.currentTime = this.videoElement.currentTime || 0;
+      request.autoplay = true;
+
+      castSession.loadMedia(request).then(
+        () => {
+          console.log('✅ Media loaded on Chromecast');
+          this.hideLoading();
+          // Hide local video, show casting message
+          this.videoElement.style.display = 'none';
+        },
+        (errorCode) => {
+          console.error('❌ Chromecast load error:', errorCode);
+          this.showError('Failed to cast to Chromecast');
+        }
+      );
+    } catch (error) {
+      console.error('❌ Chromecast error:', error);
+      this.showError('Failed to initialize Chromecast');
+    }
   }
 
   /**
