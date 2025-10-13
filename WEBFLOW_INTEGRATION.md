@@ -132,6 +132,33 @@ Any button inside the modal can close it:
 <button data-modal-action="close">×</button>
 ```
 
+### **Modal Headings (Sign In vs Sign Up)**
+
+You can now have **separate headings** for the Sign In and Sign Up tabs:
+
+**Sign In Heading:**
+- Custom Attribute: `data-modal-heading` = `signin`
+
+```html
+<h2 data-modal-heading="signin">Sign In to Watch</h2>
+```
+
+**Sign Up Heading:**
+- Custom Attribute: `data-modal-heading` = `signup`
+
+```html
+<h2 data-modal-heading="signup">Create Your Account</h2>
+```
+
+**How It Works:**
+- The system automatically shows/hides the correct heading based on which tab is active
+- When user switches to "Sign In" tab → Sign In heading shows, Sign Up heading hides
+- When user switches to "Sign Up" tab → Sign Up heading shows, Sign In heading hides
+
+**Note:** If you don't add these attributes, the system will work fine with a single shared heading.
+
+---
+
 ### **Tab Buttons**
 For switching between Sign In and Sign Up:
 
@@ -1005,6 +1032,8 @@ After adding all attributes and publishing your Webflow site:
 | Purchase Modal | `data-modal` | `purchase` |
 | Password Recovery Modal | `data-modal` | `password-recovery` |
 | Close Button | `data-modal-action` | `close` |
+| Sign In Modal Heading | `data-modal-heading` | `signin` |
+| Sign Up Modal Heading | `data-modal-heading` | `signup` |
 | **Authentication** |
 | Sign In Tab | `data-auth-tab` | `signin` |
 | Sign Up Tab | `data-auth-tab` | `signup` |
@@ -1260,11 +1289,50 @@ Add to your Webflow account page **Settings → Custom Code → Before `</body>`
 ```
 
 **What's Displayed:**
-- Product name (Rental, Regular, or Box Set)
-- Purchase date
-- Amount paid ($XX.XX USD)
-- Rental expiration (if applicable)
-- "Download Receipt" button for each purchase
+
+Each purchase item is automatically created with the following attributes for **flexible styling**:
+
+| Attribute | Element | Content | Purpose |
+|-----------|---------|---------|---------|
+| `data-purchase-item` | `<div>` | Container | Wraps each purchase |
+| `data-purchase-product-name` | `<div>` | Product name | E.g., "Tim Burton Docuseries - Regular Purchase" |
+| `data-purchase-product-description` | `<div>` | Product description | E.g., "Permanent access to 4 episodes" (supports HTML) |
+| `data-purchase-date` | `<div>` | Purchase date | E.g., "11/15/2025" |
+| `data-purchase-amount` | `<div>` | Amount paid | E.g., "$24.99 USD" |
+| `data-purchase-expiration` | `<div>` | Expiration info | For rentals only, e.g., "Expires: 11/19/2025" or "Expired" |
+| `data-download-receipt` | `<button>` | Download button | Opens Stripe receipt in new tab |
+
+**Product Descriptions Support HTML:**
+
+You can customize product descriptions with HTML formatting in `account-page.js`:
+
+```javascript
+this.products = {
+  rental: {
+    name: 'Tim Burton Docuseries - Rental',
+    description: '<strong>4-day access</strong> to all 4 episodes',
+    price: 14.99,
+    duration: '4 days'
+  },
+  regular: {
+    name: 'Tim Burton Docuseries - Regular Purchase',
+    description: 'Permanent access to <em>4 episodes</em>',
+    price: 24.99,
+    duration: 'Permanent'
+  }
+}
+```
+
+**Example Generated HTML:**
+```html
+<div data-purchase-item>
+  <div data-purchase-product-name>Tim Burton Docuseries - Regular Purchase</div>
+  <div data-purchase-product-description>Permanent access to 4 episodes</div>
+  <div data-purchase-date>11/15/2025</div>
+  <div data-purchase-amount>$24.99 USD</div>
+  <button data-download-receipt data-purchase-id="abc123">Download Receipt</button>
+</div>
+```
 
 **If no purchases:** Shows "No purchases yet."
 
@@ -1413,6 +1481,13 @@ All update buttons automatically attach event handlers - no custom code needed!
 | `data-update-email` | `<button>` | Update email button |
 | `data-update-password` | `<button>` | Update password button |
 | `data-purchase-history` | `<div>` | Purchase container |
+| `data-purchase-item` | `<div>` | Individual purchase wrapper |
+| `data-purchase-product-name` | `<div>` | Product name |
+| `data-purchase-product-description` | `<div>` | Product description (HTML supported) |
+| `data-purchase-date` | `<div>` | Purchase date |
+| `data-purchase-amount` | `<div>` | Amount paid |
+| `data-purchase-expiration` | `<div>` | Rental expiration (if applicable) |
+| `data-download-receipt` | `<button>` | Download receipt button |
 
 ---
 

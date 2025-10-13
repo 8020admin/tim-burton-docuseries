@@ -89,6 +89,14 @@ function hideAuthModal() {
   const authModal = document.querySelector('[data-modal="auth"]');
   if (authModal) {
     authModal.style.display = 'none';
+    
+    // Reset any loading buttons
+    const loadingButtons = authModal.querySelectorAll('.tb-loading');
+    loadingButtons.forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.originalText || 'Submit';
+      btn.classList.remove('tb-loading');
+    });
   }
 }
 
@@ -135,6 +143,17 @@ function switchAuthTab(tabName) {
   
   if (targetTab) targetTab.classList.add('tb-active');
   if (targetContent) targetContent.classList.add('tb-active');
+  
+  // Show/hide modal headings based on tab
+  const signInHeading = document.querySelector('[data-modal-heading="signin"]');
+  const signUpHeading = document.querySelector('[data-modal-heading="signup"]');
+  
+  if (signInHeading) {
+    signInHeading.style.display = tabName === 'signin' ? 'block' : 'none';
+  }
+  if (signUpHeading) {
+    signUpHeading.style.display = tabName === 'signup' ? 'block' : 'none';
+  }
 }
 
 // ============================================================================
@@ -165,9 +184,12 @@ async function handleEmailSignIn(e) {
       const result = await window.timBurtonAuth.signInWithEmail(email, password);
       if (!result.success) {
         showAuthError(result.error);
+        // Only reset button on error
+        setButtonLoading(submitBtn, false);
       }
+      // On success, button will be reset when modal closes
     }
-  } finally {
+  } catch (error) {
     setButtonLoading(submitBtn, false);
   }
 }
@@ -197,9 +219,12 @@ async function handleEmailSignUp(e) {
       const result = await window.timBurtonAuth.signUpWithEmail(email, password, firstName);
       if (!result.success) {
         showAuthError(result.error);
+        // Only reset button on error
+        setButtonLoading(submitBtn, false);
       }
+      // On success, button will be reset when modal closes
     }
-  } finally {
+  } catch (error) {
     setButtonLoading(submitBtn, false);
   }
 }

@@ -61,6 +61,9 @@ class AccountPageManager {
     
     // Attach event handlers to update buttons
     this.attachEventHandlers();
+    
+    // Listen for sign out events
+    this.listenForSignOut();
   }
   
   /**
@@ -98,6 +101,20 @@ class AccountPageManager {
     setTimeout(() => {
       window.location.href = '/';
     }, 1000);
+  }
+  
+  /**
+   * Listen for sign out events and redirect
+   */
+  listenForSignOut() {
+    document.addEventListener('timBurtonAuth', (event) => {
+      const { type } = event.detail;
+      
+      if (type === 'signOut') {
+        console.log('✅ Sign out detected, redirecting to homepage...');
+        this.redirectToHomepage();
+      }
+    });
   }
   
   // ============================================================================
@@ -242,22 +259,27 @@ class AccountPageManager {
     const date = purchase.createdAt ? new Date(purchase.createdAt._seconds * 1000).toLocaleDateString() : 'N/A';
     
     // Check if rental is expired
-    let expirationText = '';
+    let expirationHtml = '';
     if (purchase.productType === 'rental' && purchase.expiresAt) {
       const expiresAt = new Date(purchase.expiresAt._seconds * 1000);
       const now = new Date();
       if (now > expiresAt) {
-        expirationText = '<span class="expired">Expired</span>';
+        expirationHtml = '<div data-purchase-expiration><span class="expired">Expired</span></div>';
       } else {
-        expirationText = `<span class="active">Expires: ${expiresAt.toLocaleDateString()}</span>`;
+        expirationHtml = `<div data-purchase-expiration><span class="active">Expires: ${expiresAt.toLocaleDateString()}</span></div>`;
       }
     }
     
+    // Create product name with HTML support
+    const productNameHtml = product && product.description 
+      ? `<div data-purchase-product-name>${product.name}</div><div data-purchase-product-description>${product.description}</div>` 
+      : `<div data-purchase-product-name>${product ? product.name : purchase.productType}</div>`;
+    
     div.innerHTML = `
-      <div data-purchase-product-name>${product ? product.name : purchase.productType}</div>
+      ${productNameHtml}
       <div data-purchase-date>${date}</div>
       <div data-purchase-amount>$${amount} USD</div>
-      ${expirationText ? `<div data-purchase-expiration>${expirationText}</div>` : ''}
+      ${expirationHtml}
       <button data-download-receipt data-purchase-id="${purchase.id}">
         Download Receipt
       </button>
