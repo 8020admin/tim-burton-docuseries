@@ -297,7 +297,12 @@ class AccountPageManager {
    */
   async downloadReceipt(purchaseId) {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/payments/receipt/${purchaseId}`);
+      const idToken = await window.timBurtonAuth.getIdToken(true);
+      const response = await fetch(`${this.apiBaseUrl}/payments/receipt/${purchaseId}`, {
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
       
       if (!response.ok) {
         throw new Error('Failed to get receipt URL');
@@ -314,7 +319,7 @@ class AccountPageManager {
       
     } catch (error) {
       console.error('❌ Error downloading receipt:', error);
-      alert('Failed to download receipt. Please contact support.');
+      this.showError('Failed to download receipt. Please contact support.');
     }
   }
   

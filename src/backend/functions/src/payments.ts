@@ -263,6 +263,15 @@ router.get('/history', async (req, res) => {
 // Get receipt URL
 router.get('/receipt/:purchaseId', async (req, res) => {
   try {
+    // Require auth
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'Authorization token required' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = await admin.auth().verifyIdToken(token);
+    const requestingUserId = decoded.uid;
+
     const { purchaseId } = req.params;
     
     // Get purchase record
@@ -278,10 +287,31 @@ router.get('/receipt/:purchaseId', async (req, res) => {
       });
     }
     
-    const purchase = purchaseDoc.data();
+    const purchase = purchaseDoc.data() as any;
     
-    // Generate Stripe receipt URL
-    const receiptUrl = `https://pay.stripe.com/receipts/${purchase?.stripeSessionId}`;
+    // Only allow owner to fetch receipt
+    if (!purchase || purchase.userId !== requestingUserId) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    
+    // Prefer the Stripe-hosted receipt URL from the Payment Intent if present
+    let receiptUrl: string | null = null;
+    if (purchase.stripePaymentIntentId) {
+      try {
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
+        const pi = await stripe.paymentIntents.retrieve(purchase.stripePaymentIntentId, { expand: ['charges'] });
+        const charge = (pi.charges?.data && pi.charges.data[0]) || undefined;
+        receiptUrl = charge?.receipt_url || null;
+      } catch (e) {
+        console.error('Error retrieving Stripe receipt URL:', e);
+      }
+    }
+    
+    // Fallback to a session-based URL if needed (may not always work)
+    if (!receiptUrl && purchase.stripeSessionId) {
+      receiptUrl = `https://dashboard.stripe.com/payments/${purchase.stripeSessionId}`;
+    }
     
     res.json({
       success: true,
