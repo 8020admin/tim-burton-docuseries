@@ -356,21 +356,32 @@ class AccountPageManager {
       this.isUpdating = true;
       this.showLoadingState('Updating first name...');
       
-      const idToken = await window.timBurtonAuth.getIdToken();
-      
-      const response = await fetch(`${this.apiBaseUrl}/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          firstName: newFirstName
-        })
-      });
-      
+      // Always use a fresh token
+      let idToken = await window.timBurtonAuth.getIdToken(true);
+
+      // Request function (allows retry on 401)
+      const sendUpdate = async (token) => {
+        return fetch(`${this.apiBaseUrl}/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ firstName: newFirstName })
+        });
+      };
+
+      let response = await sendUpdate(idToken);
+
+      // If unauthorized, refresh token and retry once
+      if (response.status === 401) {
+        idToken = await window.timBurtonAuth.getIdToken(true);
+        response = await sendUpdate(idToken);
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to update first name');
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to update first name (${response.status}) ${errorText}`.trim());
       }
       
       const result = await response.json();
