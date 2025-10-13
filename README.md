@@ -121,8 +121,13 @@ prototype/
 │   │   ├── webflow-auth-handlers.js
 │   │   ├── content-access.js  # Visibility control
 │   │   ├── button-state-manager.js
-│   │   └── stripe-integration.js
-│   ├── test.html              # Complete test environment
+│   │   ├── stripe-integration.js
+│   │   ├── video-player.js    # Mux video player
+│   │   ├── content-manager.js # Continue watching, progress
+│   │   ├── user-profile.js    # Profile management
+│   │   └── init-video-player.js # Player initialization
+│   ├── css/
+│   │   └── tim-burton-styles.css # Critical CSS
 │   ├── index.html             # Landing page
 │   └── README.md              # Public folder docs
 │
@@ -132,8 +137,11 @@ prototype/
 │   │   ├── auth.ts           # Authentication endpoints
 │   │   ├── payments.ts       # Payment processing
 │   │   ├── stripe.ts         # Stripe integration
-│   │   ├── content.ts        # Content delivery
-│   │   └── users.ts          # User management
+│   │   ├── content.ts        # Content delivery & watch progress
+│   │   ├── mux.ts            # Mux video integration
+│   │   ├── users.ts          # User management
+│   │   ├── validation.ts     # Input validation
+│   │   └── logger.ts         # Logging utilities
 │   ├── lib/                  # Compiled JavaScript
 │   ├── package.json          # Dependencies
 │   └── tsconfig.json         # TypeScript config
@@ -141,6 +149,7 @@ prototype/
 ├── 📚 Documentation
 │   ├── README.md             # This file (start here!)
 │   ├── WEBFLOW_INTEGRATION.md # Complete integration guide
+│   ├── MUX_SETUP_GUIDE.md    # Video streaming setup
 │   ├── STRIPE_GUIDE.md       # Payment setup
 │   ├── FIREBASE_GUIDE.md     # Firebase setup & security
 │   ├── CLOUDFLARE_DEPLOYMENT.md # Deployment guide
@@ -158,7 +167,7 @@ prototype/
 - ✅ No duplicate code
 - ✅ Clear separation: Frontend (`public/`) vs Backend (`src/backend/`)
 - ✅ Single source of truth for each module
-- ✅ All test files consolidated in `public/test.html`
+- ✅ No test files or clutter in production codebase
 
 ---
 
@@ -214,8 +223,8 @@ prototype/
 <!-- Show for Non-Paid Users -->
 <div data-show-not-paid="true">Sign up prompt</div>
 
-<!-- Upgrade Prompt -->
-<div data-upgrade-prompt="true">Upgrade to Box Set</div>
+<!-- Show After Skeleton Load -->
+<div data-show-after-load="true">Hero content to reveal after data loads</div>
 ```
 
 ---
@@ -229,15 +238,15 @@ prototype/
 <button data-button-type="sign-out">Sign Out</button>
 
 <!-- Purchase Actions -->
-<button data-button-type="rent">Rent</button>
-<button data-button-type="buy">Buy</button>
+<button data-button-type="rent">Rent Now</button>
+<button data-button-type="buy">Buy Now</button>
 <button data-button-type="watch-now">Watch Now</button>
 ```
 
 **Button States:**
-- **Not signed in**: Sign In + Rent + Buy
-- **Signed in, not paid**: Sign Out + Rent + Buy
-- **Signed in, paid**: Sign Out + Watch Now
+- **Not signed in**: Sign In + Rent Now + Buy Now
+- **Signed in, not paid**: Sign Out + Rent Now + Buy Now
+- **Signed in, paid**: Sign Out + Watch Now (buy/rent hidden)
 
 ---
 
@@ -321,7 +330,7 @@ npm run deploy
 - ✅ Authentication System (Google + Email/Password)
 - ✅ Session Management & Persistence
 - ✅ Content Access Control (Attribute-based)
-- ✅ Button State Management (Buy/Watch Now)
+- ✅ Button State Management (Buy Now/Rent Now/Watch Now)
 - ✅ Stripe Integration (Checkout + Webhooks + Duplicate Purchase Prevention)
 - ✅ Customer Management (Proper Stripe Customers)
 - ✅ Purchase Processing (End-to-end)
@@ -329,15 +338,19 @@ npm run deploy
 - ✅ Error Handling & Loading States
 - ✅ User Profile Management (firstName, lastName, photoURL)
 - ✅ Mux Video Streaming (HLS.js, signed URLs, access control)
-- ✅ Watch Progress Tracking (Firestore, resume playback)
-- ✅ Continue Watching System (Smart sequencing, skeleton loading)
-- ✅ Full-viewport Video Player (Fullscreen, keyboard shortcuts)
+- ✅ Watch Progress Tracking (Firestore, resume playback, auto-refresh on close)
+- ✅ Continue Watching System (Smart episode sequencing, skeleton loading)
+- ✅ Full-viewport Video Player (Fullscreen, keyboard shortcuts, Chromecast, iOS auto-fullscreen)
+- ✅ Progress Bars (Per-episode progress, auto-update after watching)
+- ✅ Hero Section (Dynamic episode display, skeleton loader, visibility control)
+- ✅ Clean UX (No upgrade prompts for existing customers, hidden buy buttons)
 
 **Future Enhancements:**
 - [ ] Webflow CMS integration for episode content (webhooks)
 - [ ] Admin dashboard for content management
 - [ ] Analytics integration (Mux Data, Google Analytics)
 - [ ] Email notifications (rental expiration, new content)
+- [ ] Box set upgrade flow for existing customers
 
 ---
 
