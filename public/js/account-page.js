@@ -144,25 +144,25 @@ class AccountPageManager {
    * Populate profile fields with user data
    */
   populateProfile() {
-    // First Name
-    const firstNameEl = document.querySelector('[data-profile-first-name]');
-    if (firstNameEl) {
-      if (firstNameEl.tagName === 'INPUT' || firstNameEl.tagName === 'TEXTAREA') {
-        firstNameEl.value = this.user.firstName || '';
+    // First Name - handle multiple elements (display + input)
+    const firstNameEls = document.querySelectorAll('[data-profile-first-name]');
+    firstNameEls.forEach(el => {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.value = this.user.firstName || '';
       } else {
-        firstNameEl.textContent = this.user.firstName || 'User';
+        el.textContent = this.user.firstName || 'User';
       }
-    }
+    });
     
-    // Last Name
-    const lastNameEl = document.querySelector('[data-profile-last-name]');
-    if (lastNameEl) {
-      if (lastNameEl.tagName === 'INPUT' || lastNameEl.tagName === 'TEXTAREA') {
-        lastNameEl.value = this.user.lastName || '';
+    // Last Name - handle multiple elements (display + input)
+    const lastNameEls = document.querySelectorAll('[data-profile-last-name]');
+    lastNameEls.forEach(el => {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.value = this.user.lastName || '';
       } else {
-        lastNameEl.textContent = this.user.lastName || '';
+        el.textContent = this.user.lastName || '';
       }
-    }
+    });
     
     // Email (display only, separate field for editing)
     const emailDisplayEl = document.querySelector('[data-profile-email-display]');
@@ -331,16 +331,16 @@ class AccountPageManager {
    * Update first name
    */
   async updateFirstName(sourceButton) {
-    // Prefer explicit attribute
-    let firstNameInput = document.querySelector('[data-profile-first-name]');
+    // Find the INPUT element specifically (not display elements)
+    let firstNameInput = document.querySelector('input[data-profile-first-name], textarea[data-profile-first-name]');
     
     // Fallback: try to find a nearby input next to the triggering button
-    if ((!firstNameInput || firstNameInput.tagName !== 'INPUT') && sourceButton && sourceButton.closest) {
+    if (!firstNameInput && sourceButton && sourceButton.closest) {
       const scope = sourceButton.closest('form, section, .form-group, .w-form, div') || document;
       firstNameInput = scope.querySelector('input[data-profile-first-name], input[type="text"], input');
     }
     
-    if (!firstNameInput || firstNameInput.tagName !== 'INPUT') {
+    if (!firstNameInput) {
       console.error('First name input not found');
       return;
     }
@@ -589,8 +589,8 @@ class AccountPageManager {
     }
     
     // First name input: update on blur/Enter as a UX enhancement
-    const firstNameInput = document.querySelector('[data-profile-first-name]');
-    if (firstNameInput && (firstNameInput.tagName === 'INPUT' || firstNameInput.tagName === 'TEXTAREA')) {
+    const firstNameInput = document.querySelector('input[data-profile-first-name], textarea[data-profile-first-name]');
+    if (firstNameInput) {
       // Blur
       firstNameInput.addEventListener('blur', () => {
         const value = (firstNameInput.value || '').trim();
