@@ -1296,38 +1296,15 @@ Each purchase item is automatically created with the following attributes for **
 |-----------|---------|---------|---------|
 | `data-purchase-item` | `<div>` | Container | Wraps each purchase |
 | `data-purchase-product-name` | `<div>` | Product name | E.g., "Tim Burton Docuseries - Regular Purchase" |
-| `data-purchase-product-description` | `<div>` | Product description | E.g., "Permanent access to 4 episodes" (supports HTML) |
 | `data-purchase-date` | `<div>` | Purchase date | E.g., "11/15/2025" |
 | `data-purchase-amount` | `<div>` | Amount paid | E.g., "$24.99 USD" |
 | `data-purchase-expiration` | `<div>` | Expiration info | For rentals only, e.g., "Expires: 11/19/2025" or "Expired" |
 | `data-download-receipt` | `<button>` | Download button | Opens Stripe receipt in new tab |
 
-**Product Descriptions Support HTML:**
-
-You can customize product descriptions with HTML formatting in `account-page.js`:
-
-```javascript
-this.products = {
-  rental: {
-    name: 'Tim Burton Docuseries - Rental',
-    description: '<strong>4-day access</strong> to all 4 episodes',
-    price: 14.99,
-    duration: '4 days'
-  },
-  regular: {
-    name: 'Tim Burton Docuseries - Regular Purchase',
-    description: 'Permanent access to <em>4 episodes</em>',
-    price: 24.99,
-    duration: 'Permanent'
-  }
-}
-```
-
 **Example Generated HTML:**
 ```html
 <div data-purchase-item>
   <div data-purchase-product-name>Tim Burton Docuseries - Regular Purchase</div>
-  <div data-purchase-product-description>Permanent access to 4 episodes</div>
   <div data-purchase-date>11/15/2025</div>
   <div data-purchase-amount>$24.99 USD</div>
   <button data-download-receipt data-purchase-id="abc123">Download Receipt</button>
@@ -1483,7 +1460,6 @@ All update buttons automatically attach event handlers - no custom code needed!
 | `data-purchase-history` | `<div>` | Purchase container |
 | `data-purchase-item` | `<div>` | Individual purchase wrapper |
 | `data-purchase-product-name` | `<div>` | Product name |
-| `data-purchase-product-description` | `<div>` | Product description (HTML supported) |
 | `data-purchase-date` | `<div>` | Purchase date |
 | `data-purchase-amount` | `<div>` | Amount paid |
 | `data-purchase-expiration` | `<div>` | Rental expiration (if applicable) |

@@ -270,13 +270,11 @@ class AccountPageManager {
       }
     }
     
-    // Create product name with HTML support
-    const productNameHtml = product && product.description 
-      ? `<div data-purchase-product-name>${product.name}</div><div data-purchase-product-description>${product.description}</div>` 
-      : `<div data-purchase-product-name>${product ? product.name : purchase.productType}</div>`;
+    // Create product name (NO description in the generated HTML)
+    const productName = product ? product.name : purchase.productType;
     
     div.innerHTML = `
-      ${productNameHtml}
+      <div data-purchase-product-name>${productName}</div>
       <div data-purchase-date>${date}</div>
       <div data-purchase-amount>$${amount} USD</div>
       ${expirationHtml}
@@ -334,6 +332,9 @@ class AccountPageManager {
     // Find the INPUT element specifically (not display elements)
     let firstNameInput = document.querySelector('input[data-profile-first-name], textarea[data-profile-first-name]');
     
+    // Find the update button
+    const updateButton = sourceButton || document.querySelector('[data-update-first-name]');
+    
     // Fallback: try to find a nearby input next to the triggering button
     if (!firstNameInput && sourceButton && sourceButton.closest) {
       const scope = sourceButton.closest('form, section, .form-group, .w-form, div') || document;
@@ -359,7 +360,11 @@ class AccountPageManager {
     
     try {
       this.isUpdating = true;
-      this.showLoadingState('Updating first name...');
+      
+      // Add spinner to button
+      if (updateButton) {
+        this.setButtonLoading(updateButton, true);
+      }
       
       // Always use a fresh token
       let idToken = await window.timBurtonAuth.getIdToken(true);
@@ -393,10 +398,17 @@ class AccountPageManager {
       
       if (result.success) {
         this.user.firstName = newFirstName;
-        this.showMessage('First name updated successfully!');
         
         // Update auth state
         window.timBurtonAuth.currentUser.firstName = newFirstName;
+        
+        // Show success message briefly, then refresh
+        this.showMessage('First name updated! Refreshing...');
+        
+        // Refresh page after 1 second
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         throw new Error(result.error || 'Update failed');
       }
@@ -404,9 +416,13 @@ class AccountPageManager {
     } catch (error) {
       console.error('❌ Error updating first name:', error);
       this.showError('Failed to update first name. Please try again.');
+      
+      // Remove spinner on error
+      if (updateButton) {
+        this.setButtonLoading(updateButton, false);
+      }
     } finally {
       this.isUpdating = false;
-      this.hideLoadingState();
     }
   }
   
@@ -416,6 +432,8 @@ class AccountPageManager {
    */
   async updateEmail() {
     const emailInput = document.querySelector('[data-profile-email-input]');
+    const updateButton = document.querySelector('[data-update-email]');
+    
     if (!emailInput) {
       console.error('Email input not found');
       return;
@@ -441,7 +459,11 @@ class AccountPageManager {
     
     try {
       this.isUpdating = true;
-      this.showLoadingState('Updating email...');
+      
+      // Add spinner to button
+      if (updateButton) {
+        this.setButtonLoading(updateButton, true);
+      }
       
       const firebaseUser = window.timBurtonAuth.firebaseAuth.currentUser;
       
@@ -456,10 +478,17 @@ class AccountPageManager {
       await firebaseUser.sendEmailVerification();
       
       this.user.email = newEmail;
-      this.showMessage('Email updated! Please check your inbox for verification email.');
       
       // Update auth state
       window.timBurtonAuth.currentUser.email = newEmail;
+      
+      // Show success message briefly, then refresh
+      this.showMessage('Email updated! Refreshing...');
+      
+      // Refresh page after 1 second
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } catch (error) {
       console.error('❌ Error updating email:', error);
@@ -475,9 +504,13 @@ class AccountPageManager {
       }
       
       this.showError(errorMessage);
+      
+      // Remove spinner on error
+      if (updateButton) {
+        this.setButtonLoading(updateButton, false);
+      }
     } finally {
       this.isUpdating = false;
-      this.hideLoadingState();
     }
   }
   
@@ -489,6 +522,7 @@ class AccountPageManager {
     const currentPasswordInput = document.querySelector('[data-current-password]');
     const newPasswordInput = document.querySelector('[data-new-password]');
     const confirmPasswordInput = document.querySelector('[data-confirm-password]');
+    const updateButton = document.querySelector('[data-update-password]');
     
     if (!currentPasswordInput || !newPasswordInput || !confirmPasswordInput) {
       console.error('Password fields not found');
@@ -524,7 +558,11 @@ class AccountPageManager {
     
     try {
       this.isUpdating = true;
-      this.showLoadingState('Updating password...');
+      
+      // Add spinner to button
+      if (updateButton) {
+        this.setButtonLoading(updateButton, true);
+      }
       
       const firebaseUser = window.timBurtonAuth.firebaseAuth.currentUser;
       
@@ -548,7 +586,13 @@ class AccountPageManager {
       newPasswordInput.value = '';
       confirmPasswordInput.value = '';
       
-      this.showMessage('Password updated successfully!');
+      // Show success message briefly, then refresh
+      this.showMessage('Password updated! Refreshing...');
+      
+      // Refresh page after 1 second
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } catch (error) {
       console.error('❌ Error updating password:', error);
@@ -564,9 +608,13 @@ class AccountPageManager {
       }
       
       this.showError(errorMessage);
+      
+      // Remove spinner on error
+      if (updateButton) {
+        this.setButtonLoading(updateButton, false);
+      }
     } finally {
       this.isUpdating = false;
-      this.hideLoadingState();
     }
   }
   
@@ -634,6 +682,50 @@ class AccountPageManager {
   // UI HELPERS
   // ============================================================================
   
+  /**
+   * Set button loading state with spinner
+   */
+  setButtonLoading(button, isLoading) {
+    if (!button) return;
+    
+    if (isLoading) {
+      // Store original text
+      button.dataset.originalText = button.textContent;
+      
+      // Add spinner and disable
+      button.disabled = true;
+      button.classList.add('tb-loading');
+      
+      // Add spinner HTML if not already present
+      if (!button.querySelector('.tb-spinner')) {
+        const spinner = document.createElement('span');
+        spinner.className = 'tb-spinner';
+        button.prepend(spinner);
+        button.prepend(document.createTextNode(' '));
+      }
+    } else {
+      // Remove spinner and restore
+      button.disabled = false;
+      button.classList.remove('tb-loading');
+      
+      // Remove spinner
+      const spinner = button.querySelector('.tb-spinner');
+      if (spinner) {
+        spinner.remove();
+        // Remove the space text node if it exists
+        if (button.firstChild && button.firstChild.nodeType === 3 && button.firstChild.textContent.trim() === '') {
+          button.firstChild.remove();
+        }
+      }
+      
+      // Restore original text
+      if (button.dataset.originalText) {
+        button.textContent = button.dataset.originalText;
+        delete button.dataset.originalText;
+      }
+    }
+  }
+  
   showLoadingState(message = 'Loading...') {
     const loader = document.querySelector('[data-account-loading]');
     if (loader) {
@@ -660,7 +752,8 @@ class AccountPageManager {
         messageEl.style.display = 'none';
       }, 5000);
     } else {
-      alert(message);
+      // Fallback: log to console if no UI element
+      console.log('✅ Success:', message);
     }
   }
   
@@ -675,7 +768,8 @@ class AccountPageManager {
         errorEl.style.display = 'none';
       }, 5000);
     } else {
-      alert(message);
+      // Fallback: log to console if no UI element
+      console.error('❌ Error:', message);
     }
   }
 }
