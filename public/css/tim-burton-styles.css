@@ -213,18 +213,11 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* Google Sign-In Button Mobile Fix */
+  /* Google Sign-In Button Mobile Fix - Center the button */
   [data-google-signin] {
-    width: 100%;
-    max-width: 280px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  /* Ensure iframe inside Google Sign-In doesn't overflow */
-  [data-google-signin] iframe {
-    max-width: 100% !important;
-    width: 100% !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 

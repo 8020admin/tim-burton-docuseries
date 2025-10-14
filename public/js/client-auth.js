@@ -697,6 +697,12 @@ class TimBurtonAuth {
         : elementOrId;
       
       if (element) {
+        // Calculate responsive button width
+        // Mobile: 260px, Tablet: 300px, Desktop: 400px
+        const isMobile = window.innerWidth <= 480;
+        const isTablet = window.innerWidth > 480 && window.innerWidth <= 768;
+        const buttonWidth = isMobile ? 260 : (isTablet ? 300 : 400);
+        
         google.accounts.id.renderButton(
           element,
           {
@@ -705,7 +711,7 @@ class TimBurtonAuth {
             text: 'signin_with',
             shape: 'rectangular',
             logo_alignment: 'left',
-            width: 400
+            width: buttonWidth
           }
         );
       }
