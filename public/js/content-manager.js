@@ -96,7 +96,44 @@ class TimBurtonContentManager {
       thumbnail.style.cursor = 'pointer';
     });
 
+    // Initialize hero play button handler (separate handler to ensure it always works)
+    this.initializeHeroPlayButton();
+
     console.log(`📹 Initialized ${thumbnails.length} video thumbnails`);
+  }
+
+  /**
+   * Initialize or re-initialize the hero play button click handler
+   * This ensures the button works even when its data-video-id is updated dynamically
+   */
+  initializeHeroPlayButton() {
+    const heroPlayButton = document.querySelector('[data-hero-play-button]');
+    
+    if (heroPlayButton) {
+      // Remove old handler if it exists to prevent duplicate handlers
+      if (this.heroPlayButtonHandler) {
+        heroPlayButton.removeEventListener('click', this.heroPlayButtonHandler);
+      }
+
+      // Create and store the handler
+      this.heroPlayButtonHandler = (e) => {
+        e.preventDefault();
+        const videoId = heroPlayButton.getAttribute('data-video-id');
+        if (videoId) {
+          this.playVideo(videoId);
+        } else {
+          console.warn('Hero play button clicked but no video ID set');
+        }
+      };
+
+      // Attach the handler
+      heroPlayButton.addEventListener('click', this.heroPlayButtonHandler);
+      
+      // Add visual feedback
+      heroPlayButton.style.cursor = 'pointer';
+      
+      console.log('✅ Hero play button handler initialized');
+    }
   }
 
   /**
@@ -260,6 +297,9 @@ class TimBurtonContentManager {
       if (buttonTextEl) {
         buttonTextEl.textContent = continueWatching.isNextEpisode ? 'play' : 'Continue Watching';
       }
+
+      // Re-initialize the hero play button handler to ensure it uses the updated video ID
+      this.initializeHeroPlayButton();
     }
 
     console.log(`✅ Hero section updated: ${continueWatching.videoId} (${continueWatching.progress}%)`);
