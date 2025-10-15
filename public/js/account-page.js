@@ -104,17 +104,12 @@ class AccountPageManager {
   }
   
   /**
-   * Listen for sign out events and redirect
+   * Listen for sign out events
+   * Note: Redirect is now handled globally in webflow-auth-handlers.js
    */
   listenForSignOut() {
-    document.addEventListener('timBurtonAuth', (event) => {
-      const { type } = event.detail;
-      
-      if (type === 'signOut') {
-        console.log('✅ Sign out detected, redirecting to homepage...');
-        this.redirectToHomepage();
-      }
-    });
+    // Sign out redirect is now handled globally
+    // This method kept for backwards compatibility, can be removed if not used elsewhere
   }
   
   // ============================================================================

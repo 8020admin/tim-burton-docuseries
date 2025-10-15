@@ -38,6 +38,12 @@ document.addEventListener('timBurtonAuth', async (event) => {
       if (window.contentManager && window.contentManager.hideHeroSkeleton) {
         window.contentManager.hideHeroSkeleton();
       }
+      
+      // Redirect to homepage after sign out
+      console.log('✅ Sign out detected, redirecting to homepage...');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
       break;
       
     case 'signInError':
