@@ -79,12 +79,19 @@ class TimBurtonAuth {
       
       this.firebaseAuth = firebase.auth();
       
+      // Track if this is the first auth state change (to avoid triggering signOut event on page load)
+      let isFirstAuthStateChange = true;
+      
       // Listen for auth state changes (single source of truth)
       this.firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
         if (firebaseUser) {
           await this.handleAuthStateChange(firebaseUser);
+          isFirstAuthStateChange = false;
         } else {
-          this.handleSignOut();
+          // Only trigger signOut event if this isn't the initial page load
+          // This prevents redirect loops when user starts on a page while not signed in
+          this.handleSignOut(!isFirstAuthStateChange);
+          isFirstAuthStateChange = false;
         }
       });
       
@@ -317,29 +324,92 @@ class TimBurtonAuth {
   }
   
   /**
-   * Send password reset email
+   * Send password reset email (using backend to send custom email via SendGrid)
    */
   async resetPassword(email) {
+    try {
+      if (!email) {
+        throw new Error('Email is required');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Invalid email address');
+      }
+
+      // Call backend to send reset email via SendGrid
+      const response = await fetch(`${this.apiBaseUrl}/auth/request-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('✅ Password reset email sent');
+        this.dispatchAuthEvent('passwordResetSent', { email });
+        return { 
+          success: true, 
+          message: result.message || 'If an account exists with this email, a password reset link has been sent.' 
+        };
+      } else {
+        throw new Error(result.error || 'Failed to send password reset email');
+      }
+
+    } catch (error) {
+      console.error('❌ Password reset request error:', error);
+      
+      const errorMessage = error.message || 'Failed to send password reset email. Please try again.';
+      this.dispatchAuthEvent('passwordResetError', { error: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Confirm password reset using Firebase (called from reset password page with code from email link)
+   */
+  async confirmPasswordReset(oobCode, newPassword) {
     try {
       if (!this.firebaseAuth) {
         throw new Error('Firebase Auth not initialized');
       }
-      
-      await this.firebaseAuth.sendPasswordResetEmail(email);
-      
-      this.dispatchAuthEvent('passwordResetSent', { email });
-      return { success: true };
-      
-    } catch (error) {
-      console.error('❌ Password reset error:', error);
-      
-      let errorMessage = 'Password reset failed';
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address';
+
+      // Validate password strength
+      const passwordValidation = this.validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        const errorMessage = passwordValidation.errors.join('. ');
+        throw new Error(errorMessage);
       }
+
+      // Confirm password reset with Firebase
+      await this.firebaseAuth.confirmPasswordReset(oobCode, newPassword);
+
+      console.log('✅ Password reset successful');
+      this.dispatchAuthEvent('passwordResetComplete', {});
       
+      return { 
+        success: true, 
+        message: 'Password reset successful. You can now sign in with your new password.' 
+      };
+
+    } catch (error) {
+      console.error('❌ Password reset confirmation error:', error);
+      
+      let errorMessage = 'Failed to reset password';
+      if (error.code === 'auth/expired-action-code') {
+        errorMessage = 'Reset link has expired. Please request a new one.';
+      } else if (error.code === 'auth/invalid-action-code') {
+        errorMessage = 'Invalid or already used reset link. Please request a new one.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password must be at least 8 characters and include uppercase, lowercase, and a number';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       this.dispatchAuthEvent('passwordResetError', { error: errorMessage });
       return { success: false, error: errorMessage };
     }
@@ -366,8 +436,9 @@ class TimBurtonAuth {
   
   /**
    * Handle sign out cleanup
+   * @param {boolean} shouldDispatchEvent - Whether to dispatch the signOut event (default: true)
    */
-  handleSignOut() {
+  handleSignOut(shouldDispatchEvent = true) {
     this.currentUser = null;
     this.idToken = null;
     this.purchaseStatus = null;
@@ -380,10 +451,13 @@ class TimBurtonAuth {
       google.accounts.id.disableAutoSelect();
     }
     
-    // Notify UI
-    this.dispatchAuthEvent('signOut', null);
-    
-    console.log('✅ User signed out');
+    // Notify UI only if this is an actual sign-out action (not initial page load)
+    if (shouldDispatchEvent) {
+      this.dispatchAuthEvent('signOut', null);
+      console.log('✅ User signed out');
+    } else {
+      console.log('ℹ️ No user session found (initial page load)');
+    }
   }
   
   // ============================================================================
