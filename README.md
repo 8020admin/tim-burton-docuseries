@@ -16,6 +16,7 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 - **Database**: Cloud Firestore
 - **Payments**: Stripe
 - **Video**: Mux (HLS.js streaming, signed URLs)
+- **Emails**: SendGrid (Transactional emails)
 
 ---
 
@@ -23,10 +24,13 @@ A production-ready streaming platform for the Tim Burton docuseries, built with 
 
 ### **Integration Guides**
 - **[Webflow Integration](WEBFLOW_INTEGRATION.md)** - Complete Webflow setup with attribute-based system
+- **[Password Reset Implementation](PASSWORD_RESET_IMPLEMENTATION.md)** - Quick guide for custom password recovery
 - **[Stripe Guide](STRIPE_GUIDE.md)** - Payment integration and setup
 - **[Firebase Guide](FIREBASE_GUIDE.md)** - Firebase setup and security
 - **[Cloudflare Deployment](CLOUDFLARE_DEPLOYMENT.md)** - Deployment instructions
 - **[Mux Setup Guide](MUX_SETUP_GUIDE.md)** - Video streaming configuration
+- **[SendGrid Guide](SENDGRID_GUIDE.md)** - Email integration, templates, and spam prevention
+- **[Email Quick Reference](EMAIL_QUICK_REFERENCE.md)** - One-page SendGrid reference
 
 ### **Product Setup**
 - **[Stripe Products Setup](STRIPE_PRODUCTS_SETUP.md)** - Stripe product configuration
@@ -174,8 +178,8 @@ prototype/
 ## 💳 Payment System
 
 ### **Purchase Options**
-- **Rental**: $14.99 - 4-day access to 4 episodes
-- **Regular**: $24.99 - Permanent access to 4 episodes
+- **Rental**: $24.99 - 4-day access to 4 episodes
+- **Regular**: $39.99 - Permanent access to 4 episodes
 - **Box Set**: $74.99 - 4 episodes + 40 hours of bonus content
 
 ### **Features**
@@ -354,11 +358,18 @@ npm run deploy
 - ✅ Hero Section (Dynamic episode display, skeleton loader, visibility control)
 - ✅ Clean UX (No upgrade prompts for existing customers, hidden buy buttons)
 
+**Email Notifications (SendGrid):**
+- ✅ Welcome emails for new users
+- ✅ Purchase confirmation emails (rental, regular, box set)
+- ✅ Password reset emails
+- ✅ Rental expiration warnings (48h and 24h before)
+- ✅ Rental expired notifications
+- ✅ Scheduled tasks for automated notifications
+
 **Future Enhancements:**
 - [ ] Webflow CMS integration for episode content (webhooks)
 - [ ] Admin dashboard for content management
 - [ ] Analytics integration (Mux Data, Google Analytics)
-- [ ] Email notifications (rental expiration, new content)
 - [ ] Box set upgrade flow for existing customers
 
 ---

@@ -21,6 +21,15 @@
    - Project support email: your email
    - OAuth Client ID (from Google Cloud Console)
 
+#### **Email Templates (Custom Password Reset):**
+1. Go to **"Authentication"** → **"Templates"** tab
+2. Click on **"Password reset"** template
+3. Click **"Customize action URL"**
+4. Enter: `https://timburton-dev.webflow.io/reset-password`
+5. Click **"Save"**
+   - This ensures password reset links point to your custom Webflow page
+   - Users will see your branded reset page instead of Firebase's default
+
 #### **Firestore Database:**
 1. Go to **"Firestore Database"** in left menu
 2. Click **"Create database"**
@@ -111,6 +120,27 @@ npm install
 
 # Deploy to Firebase
 npm run deploy
+```
+
+**Functions Deployed:**
+- ✅ `api` - Main Express API (authentication, payments, content)
+- ✅ `stripeWebhook` - Stripe webhook handler
+- ✅ `checkRentalExpirations` - Scheduled task (runs hourly for email notifications)
+
+**Scheduled Functions:**
+
+The `checkRentalExpirations` function runs automatically every hour to:
+- Send 48-hour rental expiration warnings
+- Send 24-hour rental expiration warnings  
+- Send rental expired notifications
+
+**Monitoring Scheduled Functions:**
+```bash
+# View logs for scheduled tasks
+firebase functions:log --only checkRentalExpirations
+
+# Test scheduled function manually in Firebase Console
+# Go to Functions > checkRentalExpirations > Testing > Run Function
 ```
 
 ---
@@ -238,7 +268,7 @@ app.use(cors({
   userId: "firebase-uid",
   stripeSessionId: "cs_...",
   type: "regular|boxset|rental",
-  amount: 2499,
+  amount: 3999,
   currency: "usd",
   status: "completed",
   createdAt: Timestamp,

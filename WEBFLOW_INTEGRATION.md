@@ -103,6 +103,9 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <script src="https://tim-burton-docuseries.pages.dev/js/video-player.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/content-manager.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/init-video-player.js"></script>
+
+<!-- Password Reset Page (add to reset-password page only) -->
+<!-- <script src="https://tim-burton-docuseries.pages.dev/js/password-reset-page.js"></script> -->
 ```
 
 ---
@@ -326,7 +329,7 @@ Create a div for the Google button:
 ```html
 <!-- Regular Purchase -->
 <button data-purchase-type="regular">
-  Purchase - $24.99
+  Purchase - $39.99
 </button>
 
 <!-- Box Set Purchase -->
@@ -354,7 +357,7 @@ Here's a complete purchase modal with all attributes:
       <div class="purchase-option">
         <h3>Regular Access</h3>
         <p>Watch the complete docuseries</p>
-        <div class="price">$24.99</div>
+        <div class="price">$39.99</div>
         <button data-purchase-type="regular">
           Purchase Now
         </button>
@@ -590,9 +593,48 @@ Add the external stylesheet to **Project Settings > Custom Code > Head Code**:
 
 ---
 
-## 🔐 **11. Password Recovery Modal**
+## 🔐 **11. Password Recovery System**
 
-### **Modal Container**
+### **Overview**
+
+The password recovery system has two components:
+1. **Password Recovery Modal** - Popup for requesting a reset link
+2. **Password Reset Page** - Dedicated page for setting a new password
+
+Your project already has:
+- ✅ Backend endpoints (`password-reset.ts`)
+- ✅ SendGrid email template configured
+- ✅ Frontend methods (`resetPassword()`, `confirmPasswordReset()`)
+- ✅ Modal handlers in place
+
+---
+
+### **Step 1: Disable Firebase's Default Password Page**
+
+#### **Firebase Console Configuration:**
+
+1. Go to [Firebase Console → Authentication → Templates](https://console.firebase.google.com/project/tim-burton-docuseries/authentication/emails)
+2. Click **"Email Templates"** → **"Password reset"**
+3. Click **"Customize action URL"**
+4. Enter: `https://timburton-dev.webflow.io/reset-password`
+5. Click **"Save"**
+
+This ensures all password reset links point to YOUR custom page, not Firebase's default.
+
+#### **Environment Configuration:**
+
+Make sure your backend `.env` file has:
+```bash
+PASSWORD_RESET_URL=https://timburton-dev.webflow.io/reset-password
+```
+
+---
+
+### **Step 2: Password Recovery Modal (Request Reset)**
+
+This modal appears when users click "Forgot Password?" in the sign-in form.
+
+#### **Modal Container**
 **Webflow Settings:**
 - Custom Attribute: `data-modal` = `password-recovery`
 - Set initial style: `display: none`
@@ -601,7 +643,7 @@ Add the external stylesheet to **Project Settings > Custom Code > Head Code**:
 <div data-modal="password-recovery" style="display: none;">
   <div class="modal-content">
     <h2>Reset Password</h2>
-    <button data-action="close-modal">×</button>
+    <button data-modal-action="close">×</button>
     
     <form data-form="password-recovery">
       <div class="form-group">
@@ -616,7 +658,6 @@ Add the external stylesheet to **Project Settings > Custom Code > Head Code**:
       </div>
       
       <button type="submit" data-button="submit">
-        <span class="tb-spinner" style="display: none;"></span>
         Send Reset Email
       </button>
       
@@ -631,22 +672,226 @@ Add the external stylesheet to **Project Settings > Custom Code > Head Code**:
 </div>
 ```
 
-### **Form Elements**
-**Webflow Settings:**
-- Form: Custom Attribute `data-form` = `password-recovery`
-- Email Input: Custom Attribute `data-field` = `email`
-- Submit Button: Custom Attribute `data-button` = `submit`
-- Error Container: Custom Attribute `data-auth-error`
-- Success Container: Custom Attribute `data-auth-success`
-- Back Button: Custom Attribute `data-action` = `back-to-signin`
+#### **Modal Attributes Reference**
 
-### **Trigger Link**
+| Element | Attribute | Value |
+|---------|-----------|-------|
+| Modal Container | `data-modal` | `password-recovery` |
+| Close Button | `data-modal-action` | `close` |
+| Form | `data-form` | `password-recovery` |
+| Email Input | `data-field` | `email` |
+| Submit Button | `data-button` | `submit` |
+| Error Container | `data-auth-error` | (no value) |
+| Success Container | `data-auth-success` | (no value) |
+| Back Button | `data-action` | `back-to-signin` |
+
+#### **Trigger Link**
+Add this to your sign-in form:
+
 **Webflow Settings:**
 - Custom Attribute: `data-action` = `reset-password`
 
 ```html
 <a href="#" data-action="reset-password">Forgot Password?</a>
 ```
+
+---
+
+### **Step 3: Password Reset Page (Set New Password)**
+
+Create a new **dedicated Webflow page** (NOT a modal) that handles the actual password reset when users click the link in their email. This is a standalone page with a simple form.
+
+#### **Page Setup:**
+- **Page Slug:** `reset-password`
+- **Full URL:** `https://timburton-dev.webflow.io/reset-password`
+- **Page Type:** Regular page (not a modal/popup)
+
+#### **Page Structure:**
+
+This is a simple standalone page with a centered form:
+
+```html
+<!-- Full page content - no modal wrapper needed -->
+<div class="reset-password-container">
+  
+  <!-- Header -->
+  <div class="reset-password-header">
+    <h1>Create New Password</h1>
+    <p>Enter your new password below.</p>
+  </div>
+  
+  <!-- Reset Password Form -->
+  <form data-form="reset-password" class="reset-password-form">
+    
+    <!-- New Password Field -->
+    <div class="form-group">
+      <label for="new-password">New Password</label>
+      <input 
+        type="password" 
+        id="new-password" 
+        data-field="new-password" 
+        placeholder="Enter new password"
+        required
+      />
+      <small class="help-text">
+        Must be at least 8 characters with uppercase, lowercase, and a number
+      </small>
+    </div>
+    
+    <!-- Confirm Password Field -->
+    <div class="form-group">
+      <label for="confirm-password">Confirm Password</label>
+      <input 
+        type="password" 
+        id="confirm-password" 
+        data-field="confirm-password" 
+        placeholder="Confirm new password"
+        required
+      />
+    </div>
+    
+    <!-- Submit Button -->
+    <button type="submit" data-button="reset-password-submit">
+      Reset Password
+    </button>
+    
+    <!-- Feedback Messages -->
+    <div data-reset-error class="error-message" style="display: none;"></div>
+    <div data-reset-success class="success-message" style="display: none;"></div>
+    
+  </form>
+  
+  <!-- Back to Home Link -->
+  <div class="reset-password-footer">
+    <a href="/">Back to Home</a>
+  </div>
+  
+</div>
+```
+
+**Important:** This is a **standalone page**, not a modal. Style it like a normal page with:
+- Centered content container
+- Clean, simple form layout
+- No modal overlay or popup behavior
+
+#### **Page Attributes Reference**
+
+| Element | Attribute | Value |
+|---------|-----------|-------|
+| Form | `data-form` | `reset-password` |
+| New Password Input | `data-field` | `new-password` |
+| Confirm Password Input | `data-field` | `confirm-password` |
+| Submit Button | `data-button` | `reset-password-submit` |
+| Error Container | `data-reset-error` | (no value) |
+| Success Container | `data-reset-success` | (no value) |
+
+#### **Page JavaScript Handler**
+
+The password reset page requires a dedicated script to handle the form submission and Firebase password reset confirmation.
+
+**Add to Page Settings → Custom Code → Before `</body>`**:
+
+```html
+<script src="https://tim-burton-docuseries.pages.dev/js/password-reset-page.js"></script>
+```
+
+**What this script does:**
+- Extracts the `oobCode` from the URL parameters (sent via email link)
+- Validates that both password fields match
+- Calls `window.timBurtonAuth.confirmPasswordReset()` to update the password
+- Shows success/error messages
+- Redirects to homepage on success
+
+**Script Location:** `/public/js/password-reset-page.js`
+
+**Note:** Make sure the Firebase Auth scripts are loaded first (they should be in your Project Settings → Head Code). The script will automatically initialize when the page loads.
+
+---
+
+### **How It Works**
+
+1. **User clicks "Forgot Password?"** → Password Recovery Modal opens (popup)
+2. **User enters email in modal** → Backend sends reset email via SendGrid
+3. **User receives email** → Clicks reset link in email
+4. **User lands on `/reset-password` page** → Dedicated standalone page (NOT a modal) with form
+5. **User enters new password** → Form validates and updates password via Firebase
+6. **Success message shows** → After 2 seconds, user redirected to homepage
+7. **User can sign in** → Can now sign in with new password
+
+---
+
+### **SendGrid Email Configuration**
+
+Your SendGrid password reset email is **already configured**! 
+
+**Template ID:** `SENDGRID_TEMPLATE_PASSWORD_RESET` (in `.env`)  
+**Variables:**
+```json
+{
+  "firstName": "User",
+  "resetLink": "https://timburton-dev.webflow.io/reset-password?oobCode=abc123..."
+}
+```
+
+**Template Content Example:**
+```html
+<h1>Reset Your Password</h1>
+<p>Hi {{firstName}},</p>
+<p>We received a request to reset your password. Click the button below:</p>
+<a href="{{resetLink}}" style="background: #000; color: #fff; padding: 12px 24px;">
+  Reset Password
+</a>
+<p>This link expires in 1 hour.</p>
+<p>If you didn't request this, ignore this email.</p>
+```
+
+---
+
+### **Testing**
+
+1. **Test Modal:**
+   - Sign in page → Click "Forgot Password?"
+   - Enter email → Submit
+   - Check for success message
+
+2. **Test Email:**
+   - Check inbox for password reset email
+   - Verify link format: `https://timburton-dev.webflow.io/reset-password?oobCode=...`
+
+3. **Test Reset Page:**
+   - Click link in email
+   - Enter new password (must meet requirements)
+   - Submit → Should see success message and redirect
+
+4. **Test Sign In:**
+   - Use new password to sign in
+   - Should work successfully
+
+---
+
+### **Troubleshooting**
+
+**Modal not opening:**
+- Verify `data-action="reset-password"` on trigger link
+- Check browser console for errors
+- Ensure `webflow-auth-handlers.js` is loaded
+
+**Email not sending:**
+- Check Firebase Functions logs: `firebase functions:log`
+- Verify SendGrid template ID in `.env`
+- Check SendGrid Activity Feed
+
+**Reset page not working:**
+- Verify page slug is exactly `reset-password`
+- Check `oobCode` parameter exists in URL
+- Ensure Firebase scripts are loaded in head
+- Check browser console for errors
+
+**Password validation fails:**
+- Must be 8+ characters
+- Must have uppercase letter
+- Must have lowercase letter
+- Must have number
 
 ----
 
@@ -1297,7 +1542,7 @@ Each purchase item is automatically created with the following attributes for **
 | `data-purchase-item` | `<div>` | Container | Wraps each purchase |
 | `data-purchase-product-name` | `<div>` | Product name | E.g., "Tim Burton Docuseries - Regular Purchase" |
 | `data-purchase-date` | `<div>` | Purchase date | E.g., "11/15/2025" |
-| `data-purchase-amount` | `<div>` | Amount paid | E.g., "$24.99 USD" |
+| `data-purchase-amount` | `<div>` | Amount paid | E.g., "$39.99 USD" |
 | `data-purchase-expiration` | `<div>` | Expiration info | For rentals only, e.g., "Expires: 11/19/2025" or "Expired" |
 | `data-download-receipt` | `<button>` | Download button | Opens Stripe receipt in new tab |
 
@@ -1306,7 +1551,7 @@ Each purchase item is automatically created with the following attributes for **
 <div data-purchase-item>
   <div data-purchase-product-name>Tim Burton Docuseries - Regular Purchase</div>
   <div data-purchase-date>11/15/2025</div>
-  <div data-purchase-amount>$24.99 USD</div>
+  <div data-purchase-amount>$39.99 USD</div>
   <button data-download-receipt data-purchase-id="abc123">Download Receipt</button>
 </div>
 ```
@@ -1368,7 +1613,7 @@ The system automatically determines which upgrade to offer based on the user's c
 
 | Current Product | Upgrade Offered | Price | Savings |
 |----------------|-----------------|-------|---------|
-| **Rental** | Regular Purchase | $24.99 | $0 (same price they paid) |
+| **Rental** | Regular Purchase | $39.99 | $15 discount applied |
 | **Regular** | Box Set | $49.99 | **$25 off** (regular price: $74.99) |
 | **Box Set** | No upgrade (highest tier) | - | - |
 
@@ -1421,7 +1666,7 @@ The system automatically determines which upgrade to offer based on the user's c
 <div data-upgrade-prompt style="display: block;">
   <h3>Upgrade to <span data-upgrade-product-name>Regular Purchase</span></h3>
   <p data-upgrade-description>Upgrade to permanent access for the same price you paid</p>
-  <span data-upgrade-price>$24.99</span>
+  <span data-upgrade-price>$39.99</span>
   <button data-upgrade-cta data-product-type="regular">Upgrade to Permanent Access</button>
 </div>
 ```
