@@ -1,3 +1,7 @@
+// Load environment variables from .env file
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import * as admin from 'firebase-admin';
 import * as cors from 'cors';
 import * as express from 'express';
@@ -64,9 +68,11 @@ import { authRoutes } from './auth';
 import { paymentRoutes } from './payments';
 import { contentRoutes } from './content';
 import { userRoutes } from './users';
+import { passwordResetRoutes } from './password-reset';
 
 // Mount routes
 app.use('/auth', authRoutes);
+app.use('/auth', passwordResetRoutes); // Mount password reset under /auth
 app.use('/payments', paymentRoutes);
 app.use('/content', contentRoutes);
 app.use('/users', userRoutes);
@@ -156,6 +162,9 @@ app.post('/stripe-webhook', express.raw({ type: 'application/json' }), (req, res
 
 // Export the Express app as a Firebase Function
 export const api = require('firebase-functions').https.onRequest(app);
+
+// Export scheduled tasks
+export { checkRentalExpirations } from './scheduled-tasks';
 
 // Production Stripe webhook function
 export const stripeWebhook = require('firebase-functions').https.onRequest(async (req, res) => {
