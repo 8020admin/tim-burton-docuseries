@@ -49,8 +49,8 @@ async function getPriceIds() {
       // Find the price with the correct amount
       let targetPrice = null;
       const expectedAmounts = {
-        rental: 1499, // $14.99
-        regular: 2499, // $24.99
+        rental: 2499, // $24.99
+        regular: 3999, // $39.99
         boxset: 7499, // $74.99
       };
       

@@ -14,8 +14,8 @@ Products are managed in **three places** that must stay synchronized:
 
 | Product Type | Name | Price | Description | Duration |
 |--------------|------|-------|-------------|----------|
-| `rental` | Tim Burton Docuseries - Rental | $14.99 | 4-day access to all 4 episodes | 4 days |
-| `regular` | Tim Burton Docuseries - Regular Purchase | $24.99 | Permanent access to 4 episodes | Permanent |
+| `rental` | Tim Burton Docuseries - Rental | $24.99 | 4-day access to all 4 episodes | 4 days |
+| `regular` | Tim Burton Docuseries - Regular Purchase | $39.99 | Permanent access to 4 episodes | Permanent |
 | `boxset` | Tim Burton Docuseries - Box Set | $74.99 | 4 episodes + 40 hours of bonus content | Permanent |
 
 ---

@@ -10,31 +10,49 @@ exports.paymentRoutes = router;
 router.post('/checkout', async (req, res) => {
     try {
         const { userId, productType, successUrl, cancelUrl } = req.body;
+        console.log('📥 Checkout request received:', { userId, productType, successUrl, cancelUrl });
         if (!userId || !productType || !successUrl || !cancelUrl) {
+            const missingParams = [];
+            if (!userId)
+                missingParams.push('userId');
+            if (!productType)
+                missingParams.push('productType');
+            if (!successUrl)
+                missingParams.push('successUrl');
+            if (!cancelUrl)
+                missingParams.push('cancelUrl');
+            console.error('❌ Missing required parameters:', missingParams);
             return res.status(400).json({
                 success: false,
-                error: 'Missing required parameters'
+                error: `Missing required parameters: ${missingParams.join(', ')}`
             });
         }
         if (!['rental', 'regular', 'boxset'].includes(productType)) {
+            console.error('❌ Invalid product type:', productType);
             return res.status(400).json({
                 success: false,
-                error: 'Invalid product type'
+                error: `Invalid product type: ${productType}. Must be one of: rental, regular, boxset`
             });
         }
         const result = await (0, stripe_1.createCheckoutSession)(userId, productType, successUrl, cancelUrl);
         if (result.success) {
+            console.log('✅ Checkout session created successfully');
             res.json(result);
         }
         else {
+            console.error('❌ Checkout session creation failed:', result.error);
             res.status(400).json(result);
         }
     }
     catch (error) {
-        console.error('Checkout session creation error:', error);
+        console.error('❌ Checkout session creation error:', {
+            errorMessage: error === null || error === void 0 ? void 0 : error.message,
+            errorStack: error === null || error === void 0 ? void 0 : error.stack,
+            fullError: error
+        });
         res.status(500).json({
             success: false,
-            error: 'Failed to create checkout session'
+            error: (error === null || error === void 0 ? void 0 : error.message) || 'Failed to create checkout session'
         });
     }
 });

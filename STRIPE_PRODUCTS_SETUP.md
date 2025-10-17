@@ -106,7 +106,7 @@ firebase deploy --only functions
           "price": {
             "id": "price_1234567890",
             "product": "prod_1234567890",
-            "unit_amount": 2499
+            "unit_amount": 3999
           }
         }]
       }
@@ -127,8 +127,8 @@ If you prefer to create products manually in the Stripe Dashboard:
 
 | Product | Name | Description | Price |
 |---------|------|-------------|-------|
-| Rental | Tim Burton Docuseries - Rental | 4-day access to all 4 episodes | $14.99 |
-| Regular | Tim Burton Docuseries - Regular Purchase | Permanent access to 4 episodes | $24.99 |
+| Rental | Tim Burton Docuseries - Rental | 4-day access to all 4 episodes | $24.99 |
+| Regular | Tim Burton Docuseries - Regular Purchase | Permanent access to 4 episodes | $39.99 |
 | Box Set | Tim Burton Docuseries - Box Set | 4 episodes + 40 hours of bonus content | $74.99 |
 
 ## 🚀 Production Considerations

@@ -5,6 +5,7 @@
 
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import { sendPurchaseConfirmation } from './email';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -15,14 +16,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const STRIPE_PRODUCTS = {
   rental: {
     productId: 'prod_TC4QfwGl48nNV0', // Tim Burton Docuseries - Rental
-    priceId: 'price_1SFgHU2YdOc8xn437spJce8c', // $14.99 rental
+    priceId: 'price_1SHs7E2YdOc8xn43oe1u2YXO', // $24.99 rental
     name: 'Tim Burton Docuseries - Rental',
     description: '4-day access to all 4 episodes',
     duration: 4, // days
   },
   regular: {
     productId: 'prod_TC2n3CqFP5Cct9', // Tim Burton Docuseries - Regular
-    priceId: 'price_1SFehl2YdOc8xn43KaRTMc9s', // $24.99 regular
+    priceId: 'price_1SHs842YdOc8xn43mQ1lLz9d', // $39.99 regular
     name: 'Tim Burton Docuseries - Regular Purchase',
     description: 'Permanent access to 4 episodes',
     duration: null, // permanent
@@ -41,14 +42,14 @@ const PRODUCTS = {
   rental: {
     name: STRIPE_PRODUCTS.rental.name,
     description: STRIPE_PRODUCTS.rental.description,
-    price: 1499, // $14.99 in cents (updated from $9.99)
+    price: 2499, // $24.99 in cents
     type: 'rental' as const,
     duration: STRIPE_PRODUCTS.rental.duration,
   },
   regular: {
     name: STRIPE_PRODUCTS.regular.name,
     description: STRIPE_PRODUCTS.regular.description,
-    price: 2499, // $24.99 in cents
+    price: 3999, // $39.99 in cents
     type: 'regular' as const,
     duration: STRIPE_PRODUCTS.regular.duration,
   },
@@ -171,6 +172,8 @@ export async function createCheckoutSession(
     
     const product = STRIPE_PRODUCTS[productType];
     
+    console.log(`🛒 Creating checkout session for user ${userId}, productType: ${productType}, priceId: ${product.priceId}`);
+    
     // Get or create Stripe customer for this user
     const customerId = await getOrCreateStripeCustomer(userId);
     
@@ -200,11 +203,29 @@ export async function createCheckoutSession(
       sessionId: session.id,
       url: session.url,
     };
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
+  } catch (error: any) {
+    console.error('❌ Error creating checkout session:', {
+      userId,
+      productType,
+      priceId: STRIPE_PRODUCTS[productType]?.priceId,
+      errorMessage: error?.message,
+      errorType: error?.type,
+      errorCode: error?.code,
+      errorDetail: error?.raw?.message || error?.message,
+      fullError: error
+    });
+    
+    // Return more specific error message
+    let errorMessage = 'Failed to create checkout session';
+    if (error?.type === 'StripeInvalidRequestError') {
+      errorMessage = `Stripe configuration error: ${error?.message || 'Invalid price or product'}`;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+    
     return {
       success: false,
-      error: 'Failed to create checkout session',
+      error: errorMessage,
     };
   }
 }
@@ -228,8 +249,14 @@ export async function handleSuccessfulPayment(sessionId: string) {
       throw new Error('Missing required metadata');
     }
 
-    // Create purchase record
-    const purchaseData = {
+    // Calculate rental expiration time
+    const now = Date.now();
+    const rentalExpiresAt = productType === 'rental' 
+      ? admin.firestore.Timestamp.fromDate(new Date(now + 4 * 24 * 60 * 60 * 1000)) // 4 days from now
+      : null;
+
+    // Create purchase record with notification tracking
+    const purchaseData: any = {
       userId: userId,
       productType: productType,
       stripeSessionId: sessionId,
@@ -239,15 +266,51 @@ export async function handleSuccessfulPayment(sessionId: string) {
       status: 'completed',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       expiresAt: productType === 'rental' 
-        ? new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // 4 days from now
+        ? new Date(now + 4 * 24 * 60 * 60 * 1000) // 4 days from now (for backward compatibility)
         : null,
     };
 
+    // Add rental-specific fields
+    if (productType === 'rental') {
+      purchaseData.rentalExpiresAt = rentalExpiresAt;
+      purchaseData.notificationsSent = {
+        warning48h: false,
+        warning24h: false,
+        expired: false,
+      };
+    }
+
     // Save to Firestore
-    await admin.firestore().collection('purchases').add(purchaseData);
+    const purchaseRef = await admin.firestore().collection('purchases').add(purchaseData);
 
     // Update user's purchase status
     await updateUserPurchaseStatus(userId, productType);
+
+    // Get user data for email
+    const userDoc = await admin.firestore().collection('users').doc(userId).get();
+    const userData = userDoc.data();
+
+    // Send purchase confirmation email
+    if (userData?.email) {
+      const purchaseDetails = {
+        amount: session.amount_total || 0,
+        purchaseDate: new Date().toLocaleDateString(),
+        expiresAt: rentalExpiresAt ? rentalExpiresAt.toDate().toLocaleDateString() : undefined,
+      };
+
+      const emailResult = await sendPurchaseConfirmation(
+        userData.email,
+        userData.firstName || 'User',
+        productType,
+        purchaseDetails
+      );
+
+      if (emailResult.success) {
+        console.log(`✅ Purchase confirmation email sent to ${userData.email}`);
+      } else {
+        console.warn(`⚠️ Failed to send purchase confirmation email: ${emailResult.error}`);
+      }
+    }
 
     return {
       success: true,

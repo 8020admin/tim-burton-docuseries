@@ -1,12 +1,35 @@
 # 📋 Tim Burton Docuseries - Pending Tasks
 
-**Last Updated:** December 2024
+**Last Updated:** January 2025
 
 ---
 
 ## 🔴 High Priority
 
-_No high priority tasks at this time._
+### **1. Set Up Domain Authentication (SendGrid)**
+**Status:** Optional but Highly Recommended  
+**Effort:** 10 minutes + DNS wait time  
+**Reference:** `SENDGRID_GUIDE.md` > Preventing Spam Folder Issues
+
+**Description:**
+Emails are working and being delivered, but may go to spam folder without domain authentication. Setting up domain authentication will move 90%+ of emails from spam to inbox.
+
+**Current Status:**
+- ✅ SendGrid fully integrated and deployed
+- ✅ Emails sending successfully from admin@woodentertainment.net
+- ✅ All transactional emails active (welcome, purchases, password reset, rental warnings)
+- ⚠️ Emails may go to spam without domain authentication
+
+**Setup Domain Authentication:**
+1. Go to SendGrid Dashboard: https://app.sendgrid.com/
+2. Navigate to Settings > Sender Authentication
+3. Click "Authenticate Your Domain"
+4. Add 3 DNS records to woodentertainment.net
+5. Wait for DNS verification (24-48 hours)
+
+**Result:** Emails will go to inbox instead of spam
+
+**Documentation:** See full guide in `SENDGRID_GUIDE.md`
 
 ---
 
@@ -111,6 +134,16 @@ Follow the comprehensive guide in `PRODUCT_MANAGEMENT_GUIDE.md`:
 
 ## ✅ Recently Completed
 
+### SendGrid Email Integration _(Jan 2025)_
+- ✅ Complete email service with SendGrid integration
+- ✅ Welcome emails on account creation
+- ✅ Purchase confirmation emails (rental, regular, box set)
+- ✅ Password reset emails with custom templates
+- ✅ Rental expiration warnings (48h and 24h)
+- ✅ Scheduled function for automated notifications (runs hourly)
+- ✅ Comprehensive documentation created
+- ✅ Functions deployed to Firebase
+
 ### Stripe Receipt Emails _(Dec 2024)_
 - ✅ Enabled automatic receipt emails in Stripe Dashboard
 - ✅ Customers now receive email receipts immediately after purchase
@@ -136,11 +169,17 @@ Follow the comprehensive guide in `PRODUCT_MANAGEMENT_GUIDE.md`:
 
 | File | Purpose |
 |------|---------|
-| `PRODUCT_MANAGEMENT_GUIDE.md` | How to add/manage products in Stripe + codebase |
+| `README.md` | Main project documentation and overview |
+| `PROJECT_SPEC.md` | Complete project requirements and features |
 | `WEBFLOW_INTEGRATION.md` | Complete integration guide for Webflow |
 | `STRIPE_GUIDE.md` | Stripe setup and configuration |
+| `STRIPE_PRODUCTS_SETUP.md` | Stripe product creation guide |
+| `PRODUCT_MANAGEMENT_GUIDE.md` | How to add/manage products in Stripe + codebase |
 | `FIREBASE_GUIDE.md` | Firebase setup and deployment |
-| `PROJECT_SPEC.md` | Original project requirements |
+| `SENDGRID_GUIDE.md` | Complete SendGrid setup, templates, spam prevention |
+| `EMAIL_QUICK_REFERENCE.md` | One-page SendGrid quick reference |
+| `MUX_SETUP_GUIDE.md` | Video streaming setup |
+| `CLOUDFLARE_DEPLOYMENT.md` | Deployment instructions |
 
 ---
 

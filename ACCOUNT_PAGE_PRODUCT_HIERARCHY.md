@@ -27,12 +27,12 @@ The account page now automatically:
 └─────────────────────────────────┘
           ↑ Prevails over
 ┌─────────────────────────────────┐
-│  Tier 2: Regular ($24.99)      │
+│  Tier 2: Regular ($39.99)      │
 │  Permanent access to 4 episodes │
 └─────────────────────────────────┘
           ↑ Prevails over
 ┌─────────────────────────────────┐
-│  Tier 1: Rental ($14.99)       │  ← Lowest
+│  Tier 1: Rental ($24.99)       │  ← Lowest
 │  4-day access to 4 episodes     │
 └─────────────────────────────────┘
 ```
@@ -60,7 +60,7 @@ The account page now automatically:
 ### **Upgrade Logic:**
 
 ```
-Rental User  →  Upgrade to Regular ($24.99)
+Rental User  →  Upgrade to Regular ($39.99)
                 ✅ Same price they paid
                 ✅ Permanent access
 
@@ -76,7 +76,7 @@ Box Set User →  No upgrade (highest tier)
 
 | From | To | Regular Price | Upgrade Price | Savings |
 |------|-----|--------------|---------------|---------|
-| **Rental** | Regular | $24.99 | **$24.99** | $0 (same price) |
+| **Rental** | Regular | $39.99 | **$39.99** | $15 discount applied |
 | **Regular** | Box Set | $74.99 | **$49.99** | **$25.00** |
 | **Box Set** | - | - | - | No upgrade |
 
@@ -255,16 +255,16 @@ To use these features in Webflow:
 ## 🧪 Testing Scenarios
 
 ### **Test 1: Rental User**
-1. Purchase Rental ($14.99)
+1. Purchase Rental ($24.99)
 2. Visit `/account`
 3. **Expected:**
    - Current Product: "Tim Burton Docuseries - Rental"
    - Expiration date visible
-   - Upgrade prompt shows "Regular Purchase" at $24.99
+   - Upgrade prompt shows "Regular Purchase" at $39.99
    - No savings badge
 
 ### **Test 2: Regular User**
-1. Purchase Regular ($24.99)
+1. Purchase Regular ($39.99)
 2. Visit `/account`
 3. **Expected:**
    - Current Product: "Tim Burton Docuseries - Regular Purchase"
@@ -282,8 +282,8 @@ To use these features in Webflow:
    - **No upgrade prompt** (hidden)
 
 ### **Test 4: Multi-Purchase User**
-1. Purchase Rental ($14.99)
-2. Purchase Regular ($24.99)
+1. Purchase Rental ($24.99)
+2. Purchase Regular ($39.99)
 3. Visit `/account`
 4. **Expected:**
    - Current Product: "Regular Purchase" (Tier 2 prevails)

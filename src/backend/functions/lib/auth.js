@@ -4,6 +4,7 @@ exports.authRoutes = void 0;
 const admin = require("firebase-admin");
 const express = require("express");
 const validation_1 = require("./validation");
+const email_1 = require("./email");
 const router = express.Router();
 exports.authRoutes = router;
 // Default profile pictures for new users
@@ -85,6 +86,16 @@ router.post('/session', async (req, res) => {
             };
             await admin.firestore().collection('users').doc(uid).set(newUser);
             console.log('✅ New user created:', uid, 'with profile:', { firstName, lastName, photoURL: newUser.photoURL });
+            // Send welcome email to new user
+            if (decodedToken.email) {
+                const emailResult = await (0, email_1.sendWelcomeEmail)(decodedToken.email, firstName);
+                if (emailResult.success) {
+                    console.log(`✅ Welcome email sent to ${decodedToken.email}`);
+                }
+                else {
+                    console.warn(`⚠️ Failed to send welcome email: ${emailResult.error}`);
+                }
+            }
             return res.json({
                 success: true,
                 user: newUser

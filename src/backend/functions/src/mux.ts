@@ -51,13 +51,13 @@ export async function generateSignedPlaybackUrl(
     }
 
     // Use Mux's built-in JWT helper
+    // NOTE: Keep params minimal to allow Chromecast/casting devices to access the stream
+    // The user_id param can cause issues with casting since the request comes from a different device
     const token = Mux.JWT.signPlaybackId(playbackId, {
       type: 'video',
-      expiration: `${expiresIn}s`,
-      params: {
-        // Optional: Add custom params that will be validated
-        user_id: userId
-      }
+      expiration: `${expiresIn}s`
+      // params removed to allow casting devices to access the stream
+      // Access control is already handled by the getPlaybackUrl() function
     });
 
     // Construct the signed URL

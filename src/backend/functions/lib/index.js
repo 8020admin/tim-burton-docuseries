@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stripeWebhook = exports.api = void 0;
+exports.stripeWebhook = exports.checkRentalExpirations = exports.api = void 0;
+// Load environment variables from .env file
+const dotenv = require("dotenv");
+dotenv.config();
 const admin = require("firebase-admin");
 const cors = require("cors");
 const express = require("express");
@@ -59,8 +62,10 @@ const auth_1 = require("./auth");
 const payments_1 = require("./payments");
 const content_1 = require("./content");
 const users_1 = require("./users");
+const password_reset_1 = require("./password-reset");
 // Mount routes
 app.use('/auth', auth_1.authRoutes);
+app.use('/auth', password_reset_1.passwordResetRoutes); // Mount password reset under /auth
 app.use('/payments', payments_1.paymentRoutes);
 app.use('/content', content_1.contentRoutes);
 app.use('/users', users_1.userRoutes);
@@ -138,6 +143,9 @@ app.post('/stripe-webhook', express.raw({ type: 'application/json' }), (req, res
 });
 // Export the Express app as a Firebase Function
 exports.api = require('firebase-functions').https.onRequest(app);
+// Export scheduled tasks
+var scheduled_tasks_1 = require("./scheduled-tasks");
+Object.defineProperty(exports, "checkRentalExpirations", { enumerable: true, get: function () { return scheduled_tasks_1.checkRentalExpirations; } });
 // Production Stripe webhook function
 exports.stripeWebhook = require('firebase-functions').https.onRequest(async (req, res) => {
     var _a, _b;

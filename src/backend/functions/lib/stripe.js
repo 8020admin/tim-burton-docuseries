@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyWebhookSignature = exports.createStripeProducts = exports.getUserPurchaseStatus = exports.handleSuccessfulPayment = exports.createCheckoutSession = exports.canUserPurchase = void 0;
 const admin = require("firebase-admin");
 const stripe_1 = require("stripe");
+const email_1 = require("./email");
 // Initialize Stripe
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2023-10-16',
@@ -15,14 +16,14 @@ const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
 const STRIPE_PRODUCTS = {
     rental: {
         productId: 'prod_TC4QfwGl48nNV0',
-        priceId: 'price_1SFgHU2YdOc8xn437spJce8c',
+        priceId: 'price_1SHs7E2YdOc8xn43oe1u2YXO',
         name: 'Tim Burton Docuseries - Rental',
         description: '4-day access to all 4 episodes',
         duration: 4, // days
     },
     regular: {
         productId: 'prod_TC2n3CqFP5Cct9',
-        priceId: 'price_1SFehl2YdOc8xn43KaRTMc9s',
+        priceId: 'price_1SHs842YdOc8xn43mQ1lLz9d',
         name: 'Tim Burton Docuseries - Regular Purchase',
         description: 'Permanent access to 4 episodes',
         duration: null, // permanent
@@ -40,14 +41,14 @@ const PRODUCTS = {
     rental: {
         name: STRIPE_PRODUCTS.rental.name,
         description: STRIPE_PRODUCTS.rental.description,
-        price: 1499,
+        price: 2499,
         type: 'rental',
         duration: STRIPE_PRODUCTS.rental.duration,
     },
     regular: {
         name: STRIPE_PRODUCTS.regular.name,
         description: STRIPE_PRODUCTS.regular.description,
-        price: 2499,
+        price: 3999,
         type: 'regular',
         duration: STRIPE_PRODUCTS.regular.duration,
     },
@@ -143,6 +144,7 @@ exports.canUserPurchase = canUserPurchase;
  * Create Stripe checkout session
  */
 async function createCheckoutSession(userId, productType, successUrl, cancelUrl) {
+    var _a, _b;
     try {
         // Validate if user can purchase this product
         const validation = await canUserPurchase(userId, productType);
@@ -154,6 +156,7 @@ async function createCheckoutSession(userId, productType, successUrl, cancelUrl)
             };
         }
         const product = STRIPE_PRODUCTS[productType];
+        console.log(`🛒 Creating checkout session for user ${userId}, productType: ${productType}, priceId: ${product.priceId}`);
         // Get or create Stripe customer for this user
         const customerId = await getOrCreateStripeCustomer(userId);
         const session = await stripe.checkout.sessions.create({
@@ -182,10 +185,27 @@ async function createCheckoutSession(userId, productType, successUrl, cancelUrl)
         };
     }
     catch (error) {
-        console.error('Error creating checkout session:', error);
+        console.error('❌ Error creating checkout session:', {
+            userId,
+            productType,
+            priceId: (_a = STRIPE_PRODUCTS[productType]) === null || _a === void 0 ? void 0 : _a.priceId,
+            errorMessage: error === null || error === void 0 ? void 0 : error.message,
+            errorType: error === null || error === void 0 ? void 0 : error.type,
+            errorCode: error === null || error === void 0 ? void 0 : error.code,
+            errorDetail: ((_b = error === null || error === void 0 ? void 0 : error.raw) === null || _b === void 0 ? void 0 : _b.message) || (error === null || error === void 0 ? void 0 : error.message),
+            fullError: error
+        });
+        // Return more specific error message
+        let errorMessage = 'Failed to create checkout session';
+        if ((error === null || error === void 0 ? void 0 : error.type) === 'StripeInvalidRequestError') {
+            errorMessage = `Stripe configuration error: ${(error === null || error === void 0 ? void 0 : error.message) || 'Invalid price or product'}`;
+        }
+        else if (error === null || error === void 0 ? void 0 : error.message) {
+            errorMessage = error.message;
+        }
         return {
             success: false,
-            error: 'Failed to create checkout session',
+            error: errorMessage,
         };
     }
 }
@@ -206,7 +226,12 @@ async function handleSuccessfulPayment(sessionId) {
         if (!userId || !productType) {
             throw new Error('Missing required metadata');
         }
-        // Create purchase record
+        // Calculate rental expiration time
+        const now = Date.now();
+        const rentalExpiresAt = productType === 'rental'
+            ? admin.firestore.Timestamp.fromDate(new Date(now + 4 * 24 * 60 * 60 * 1000)) // 4 days from now
+            : null;
+        // Create purchase record with notification tracking
         const purchaseData = {
             userId: userId,
             productType: productType,
@@ -217,13 +242,40 @@ async function handleSuccessfulPayment(sessionId) {
             status: 'completed',
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             expiresAt: productType === 'rental'
-                ? new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // 4 days from now
+                ? new Date(now + 4 * 24 * 60 * 60 * 1000) // 4 days from now (for backward compatibility)
                 : null,
         };
+        // Add rental-specific fields
+        if (productType === 'rental') {
+            purchaseData.rentalExpiresAt = rentalExpiresAt;
+            purchaseData.notificationsSent = {
+                warning48h: false,
+                warning24h: false,
+                expired: false,
+            };
+        }
         // Save to Firestore
-        await admin.firestore().collection('purchases').add(purchaseData);
+        const purchaseRef = await admin.firestore().collection('purchases').add(purchaseData);
         // Update user's purchase status
         await updateUserPurchaseStatus(userId, productType);
+        // Get user data for email
+        const userDoc = await admin.firestore().collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        // Send purchase confirmation email
+        if (userData === null || userData === void 0 ? void 0 : userData.email) {
+            const purchaseDetails = {
+                amount: session.amount_total || 0,
+                purchaseDate: new Date().toLocaleDateString(),
+                expiresAt: rentalExpiresAt ? rentalExpiresAt.toDate().toLocaleDateString() : undefined,
+            };
+            const emailResult = await (0, email_1.sendPurchaseConfirmation)(userData.email, userData.firstName || 'User', productType, purchaseDetails);
+            if (emailResult.success) {
+                console.log(`✅ Purchase confirmation email sent to ${userData.email}`);
+            }
+            else {
+                console.warn(`⚠️ Failed to send purchase confirmation email: ${emailResult.error}`);
+            }
+        }
         return {
             success: true,
             purchase: purchaseData,

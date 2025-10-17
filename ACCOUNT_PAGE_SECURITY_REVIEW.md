@@ -227,7 +227,7 @@ await firebaseUser.updatePassword(newPassword);
   id: "purchaseId123",
   userId: "abc123",
   productType: "regular",
-  amount: 2499,
+  amount: 3999,
   stripeSessionId: "cs_...",
   stripePaymentIntentId: "pi_...",
   createdAt: Timestamp,

@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as express from 'express';
 import { validatePassword } from './validation';
+import { sendWelcomeEmail } from './email';
 
 const router = express.Router();
 
@@ -96,6 +97,16 @@ router.post('/session', async (req, res) => {
       await admin.firestore().collection('users').doc(uid).set(newUser);
       
       console.log('✅ New user created:', uid, 'with profile:', { firstName, lastName, photoURL: newUser.photoURL });
+      
+      // Send welcome email to new user
+      if (decodedToken.email) {
+        const emailResult = await sendWelcomeEmail(decodedToken.email, firstName);
+        if (emailResult.success) {
+          console.log(`✅ Welcome email sent to ${decodedToken.email}`);
+        } else {
+          console.warn(`⚠️ Failed to send welcome email: ${emailResult.error}`);
+        }
+      }
       
       return res.json({
         success: true,

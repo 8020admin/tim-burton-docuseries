@@ -9,8 +9,8 @@ Complete Stripe payment integration for the Tim Burton Docuseries streaming plat
 ## 💳 Payment Options
 
 ### **Purchase Types:**
-- **Rental**: $14.99 USD - 4-day access to all 4 episodes
-- **Regular Purchase**: $24.99 USD - Permanent access to 4 episodes  
+- **Rental**: $24.99 USD - 4-day access to all 4 episodes
+- **Regular Purchase**: $39.99 USD - Permanent access to 4 episodes  
 - **Box Set**: $74.99 USD - 4 episodes + 40 hours of bonus content
 
 ### **Features:**
@@ -177,7 +177,7 @@ purchases/{purchaseId}
   userId: "firebase-uid",
   stripeSessionId: "cs_test_...",
   type: "regular|boxset|rental",
-  amount: 2499, // in cents
+  amount: 3999, // in cents
   currency: "usd",
   status: "completed|failed|refunded",
   createdAt: Timestamp,
@@ -205,7 +205,7 @@ users/{userId}
         purchaseId: "purchase-id",
         type: "regular",
         date: Timestamp,
-        amount: 2499
+        amount: 3999
       }
     ]
   }

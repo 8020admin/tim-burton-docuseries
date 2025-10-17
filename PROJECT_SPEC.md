@@ -19,8 +19,8 @@ A streaming platform for a Tim Burton docuseries that allows users to rent or pu
 - **Overview page shows rental countdown timer**
 
 ### Content Access Models
-- **Rental**: $14.99 USD - 4-day access to all 4 episodes after purchase
-- **Regular Purchase**: $24.99 USD - Permanent access to 4 episodes
+- **Rental**: $24.99 USD - 4-day access to all 4 episodes after purchase
+- **Regular Purchase**: $39.99 USD - Permanent access to 4 episodes
 - **Box Set Purchase**: $74.99 USD - 4 episodes + 40 hours of extras
 
 ### Content Structure
@@ -126,11 +126,12 @@ A streaming platform for a Tim Burton docuseries that allows users to rent or pu
 - **Receipt download links** in user dashboard
 
 ### Email Communications
-- SendGrid integration
-- Welcome emails
-- Purchase confirmations
-- **Rental expiration notifications** (content access disabled)
-- Password reset functionality
+- ✅ SendGrid integration (fully implemented)
+- ✅ Welcome emails (on account creation)
+- ✅ Purchase confirmations (rental, regular, box set)
+- ✅ **Rental expiration notifications** (48h and 24h warnings, expiration notice)
+- ✅ Password reset functionality (custom emails via SendGrid)
+- ✅ Scheduled tasks for automated notifications
 
 ### Regional Management
 - Cloudflare-based region detection
@@ -149,7 +150,7 @@ A streaming platform for a Tim Burton docuseries that allows users to rent or pu
 ## Questions for Clarification
 
 ### Content & Business Model
-1. ~~What is the pricing structure for rental vs. regular purchase vs. box set?~~ **ANSWERED: $14.99 rental, $24.99 regular, $74.99 box set (USD only)**
+1. ~~What is the pricing structure for rental vs. regular purchase vs. box set?~~ **ANSWERED: $24.99 rental, $39.99 regular, $74.99 box set (USD only)**
 2. ~~Are there any promotional pricing or discount codes planned?~~ **ANSWERED: No promotional pricing or discount codes**
 3. ~~What regions will have theater releases first, and what's the typical window before streaming access?~~ **ANSWERED: Unknown full calendar, need flexible admin system. LATAM blocked initially (duration TBD)**
 4. ~~Will there be any free preview content or trailers?~~ **ANSWERED: YouTube trailer embed on homepage only**
@@ -186,7 +187,7 @@ A streaming platform for a Tim Burton docuseries that allows users to rent or pu
 All questions have been answered and the specification is now complete. The project is ready for development with the following key features:
 
 ### Summary of Key Decisions:
-- **Pricing**: $14.99 rental, $24.99 regular, $74.99 box set (USD only)
+- **Pricing**: $24.99 rental, $39.99 regular, $74.99 box set (USD only)
 - **No promotional pricing** or discount codes
 - **Flexible regional management** with LATAM initially blocked
 - **YouTube trailer** on homepage only
