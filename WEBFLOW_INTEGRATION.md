@@ -104,7 +104,14 @@ Go to **Project Settings > Custom Code > Head Code** and add:
 <script src="https://tim-burton-docuseries.pages.dev/js/content-manager.js"></script>
 <script src="https://tim-burton-docuseries.pages.dev/js/init-video-player.js"></script>
 
-<!-- Password Reset Page (add to reset-password page only) -->
+<!-- Page-Specific Scripts (add to specific pages only, not globally) -->
+<!-- Account Page (add to /account page only) -->
+<!-- <script src="https://tim-burton-docuseries.pages.dev/js/account-page.js"></script> -->
+
+<!-- Episodes Page (add to /episodes page only) -->
+<!-- <script src="https://tim-burton-docuseries.pages.dev/js/episodes-page.js"></script> -->
+
+<!-- Password Reset Page (add to /reset-password page only) -->
 <!-- <script src="https://tim-burton-docuseries.pages.dev/js/password-reset-page.js"></script> -->
 ```
 
@@ -1863,7 +1870,63 @@ All update buttons automatically attach event handlers - no custom code needed!
 
 ---
 
-## 🎓 **15. Need Help?**
+## 🎬 **15. Episodes Page Protection**
+
+### **Overview**
+
+The `/episodes` page is protected and requires authentication. If a visitor lands on the episodes page without being signed in, they are **immediately redirected to the homepage**.
+
+This follows the same pattern as the `/account` page to ensure consistent security across the site.
+
+---
+
+### **Required Script**
+
+Add to your Webflow **Episodes page** → **Settings → Custom Code → Before `</body>`**:
+
+```html
+<script src="https://tim-burton-docuseries.pages.dev/js/episodes-page.js"></script>
+```
+
+**Important:** This script must load AFTER the auth scripts (client-auth.js).
+
+---
+
+### **Authentication Protection**
+
+**✅ Automatic!** The episodes page automatically redirects non-authenticated users to the homepage immediately.
+
+**How It Works:**
+1. Script loads when episodes page loads
+2. Waits for authentication system to initialize (max 5 seconds)
+3. Checks if user is signed in
+4. If NOT signed in → **Immediate redirect to homepage** (`/`)
+5. If signed in → User can access the episodes page
+
+**No Configuration Needed:** Unlike the account page, there are no optional message elements. The redirect is instant and silent.
+
+---
+
+### **Testing the Episodes Page Protection**
+
+1. **Test Redirect:** Sign out → Visit `/episodes` directly → Should redirect to homepage immediately
+2. **Test Access:** Sign in → Visit `/episodes` → Should load normally
+3. **Test Direct URL:** While signed out, try accessing `/episodes` via URL → Should redirect to homepage
+
+---
+
+### **Implementation Pattern**
+
+This follows the **same clean pattern** as the account page:
+- ✅ No band-aid solutions
+- ✅ No patchwork code  
+- ✅ Consistent with existing authentication flow
+- ✅ Uses the same `window.timBurtonAuth.isSignedIn()` check
+- ✅ Elegant integration between HTML, CSS, and JS
+
+---
+
+## 🎓 **16. Need Help?**
 
 If you need to add a new interaction:
 1. Choose a semantic attribute name (e.g., `data-my-feature`)

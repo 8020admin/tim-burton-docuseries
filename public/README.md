@@ -22,11 +22,18 @@ public/
 ├── index.html          # Landing page
 ├── test.html           # Complete test environment
 ├── js/                 # JavaScript files
-│   ├── client-auth.js
-│   ├── webflow-auth-handlers.js
-│   ├── content-access.js
-│   ├── button-state-manager.js
-│   └── stripe-integration.js
+│   ├── client-auth.js              # Core authentication system
+│   ├── webflow-auth-handlers.js    # Webflow integration handlers
+│   ├── content-access.js           # Content visibility control
+│   ├── button-state-manager.js     # Interactive button states
+│   ├── stripe-integration.js       # Payment processing
+│   ├── account-page.js             # Account page with auth protection
+│   ├── episodes-page.js            # Episodes page with auth protection
+│   ├── password-reset-page.js      # Password reset page
+│   ├── user-profile.js             # User profile management
+│   ├── video-player.js             # Video player integration
+│   ├── content-manager.js          # Content catalog management
+│   └── init-video-player.js        # Video player initialization
 └── package.json        # Project configuration
 ```
 
