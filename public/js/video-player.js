@@ -103,12 +103,20 @@ class TimBurtonVideoPlayer {
    */
   onCastSessionStarted(session) {
     console.log('✅ Cast session started');
+    console.log('📺 Cast device:', session.getCastDevice().friendlyName);
     this.castSession = session;
     
     // If we have a video loaded, cast it
     if (this.currentVideoUrl && this.videoElement) {
       const currentTime = this.videoElement.currentTime || 0;
       const isPaused = this.videoElement.paused;
+      
+      console.log('📹 Transferring video to cast device:', {
+        url: this.currentVideoUrl.substring(0, 50) + '...',
+        currentTime,
+        isPaused,
+        title: this.currentVideoTitle
+      });
       
       // Pause local video
       this.videoElement.pause();
@@ -121,6 +129,11 @@ class TimBurtonVideoPlayer {
       
       // Show casting indicator
       this.showCastingIndicator();
+    } else {
+      console.warn('⚠️ No video loaded to cast:', {
+        hasUrl: !!this.currentVideoUrl,
+        hasElement: !!this.videoElement
+      });
     }
   }
 
@@ -177,9 +190,17 @@ class TimBurtonVideoPlayer {
       return;
     }
 
+    console.log('🎬 Loading media on cast device...', {
+      urlPreview: hlsUrl.substring(0, 80) + '...',
+      startTime,
+      autoplay,
+      contentType: 'application/vnd.apple.mpegurl'
+    });
+
     try {
       // Create media info
-      const mediaInfo = new chrome.cast.media.MediaInfo(hlsUrl, 'application/x-mpegurl');
+      // Use application/vnd.apple.mpegurl for better Chromecast compatibility
+      const mediaInfo = new chrome.cast.media.MediaInfo(hlsUrl, 'application/vnd.apple.mpegurl');
       
       // Set metadata
       mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
@@ -190,14 +211,22 @@ class TimBurtonVideoPlayer {
       request.currentTime = startTime;
       request.autoplay = autoplay;
 
+      console.log('📤 Sending media to cast device...');
+
       // Load media on cast device
       this.castSession.loadMedia(request).then(
         () => {
-          console.log('✅ Media loaded on cast device');
+          console.log('✅ Media loaded successfully on cast device');
           this.hideLoading();
         },
         (errorCode) => {
-          console.error('❌ Failed to load media on cast device:', errorCode);
+          console.error('❌ Cast load failed with error code:', errorCode);
+          console.error('📋 Error details:', {
+            errorCode,
+            type: typeof errorCode,
+            message: errorCode.description || errorCode.message || 'Unknown error'
+          });
+          
           this.showError('Failed to cast video. Resuming local playback...');
           
           // Fall back to local playback
@@ -209,7 +238,12 @@ class TimBurtonVideoPlayer {
         }
       );
     } catch (error) {
-      console.error('❌ Error loading media on cast:', error);
+      console.error('❌ Exception loading media on cast:', error);
+      console.error('📋 Exception details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       this.showError('Failed to cast video');
     }
   }
