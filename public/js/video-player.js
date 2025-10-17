@@ -68,6 +68,16 @@ class TimBurtonVideoPlayer {
           );
           
           console.log('✅ Chromecast initialized');
+          
+          // IMPORTANT: Check if there's already an active cast session
+          // This handles the case where user clicks cast before video loads
+          const existingSession = castContext.getCurrentSession();
+          if (existingSession) {
+            console.log('🔄 Found existing cast session on init');
+            this.castSession = existingSession;
+            // Don't auto-transfer yet - wait for a video to load
+            // The loadVideo() function will detect this.castSession and handle it
+          }
         } catch (error) {
           console.warn('⚠️ Chromecast initialization failed:', error.message);
         }
@@ -515,6 +525,8 @@ class TimBurtonVideoPlayer {
    * Load video using HLS.js or native player
    */
   async loadVideo(hlsUrl) {
+    console.log('🎬 loadVideo called with URL:', hlsUrl.substring(0, 80) + '...');
+    
     // Store URL for Chromecast
     this.currentVideoUrl = hlsUrl;
 
@@ -523,12 +535,15 @@ class TimBurtonVideoPlayer {
       try {
         const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
         if (castSession) {
+          console.log('📺 Cast session detected! Loading video on cast device instead of locally');
           // Already casting - load the new video on cast device
           this.castSession = castSession;
           this.loadMediaOnCast(hlsUrl, 0, true);
           this.videoElement.style.display = 'none';
           this.showCastingIndicator();
           return;
+        } else {
+          console.log('💻 No active cast session - loading video locally');
         }
       } catch (error) {
         console.warn('⚠️ Cast session check failed:', error.message);
