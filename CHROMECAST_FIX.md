@@ -210,16 +210,61 @@ The Cast SDK script is already included in the Webflow integration:
 
 Once you deploy the updated `video-player.js` to Cloudflare Pages, the fix will work automatically for all users.
 
-## Deployment
+## Additional Issue Found: Mux Signed URL Restrictions
 
-To deploy this fix:
+### The Session Error Problem
 
-1. The changes are in: `public/js/video-player.js`
-2. Deploy to Cloudflare Pages (commit and push, or use Cloudflare dashboard)
-3. The updated file will be served at: `https://tim-burton-docuseries.pages.dev/js/video-player.js`
-4. No changes needed in Webflow - it already loads this file
+After implementing the event listeners, casting still failed with error code `session_error: "Unknown error"`. Investigation revealed the root cause:
+
+**The Problem**: Mux signed playback URLs had restrictive JWT parameters that blocked Chromecast devices.
+
+When the backend generated signed URLs:
+```typescript
+const token = Mux.JWT.signPlaybackId(playbackId, {
+  type: 'video',
+  expiration: `${expiresIn}s`,
+  params: { user_id: userId }  // ❌ This blocked Chromecast
+});
+```
+
+The browser could play these URLs, but when the **Chromecast device** tried to fetch the same URL:
+- Request came from different device/IP address
+- Different user agent
+- JWT validation failed → `session_error`
+
+### The Solution
+
+**File**: `src/backend/functions/src/mux.ts`
+
+Removed the restrictive `params` from JWT signing:
+```typescript
+const token = Mux.JWT.signPlaybackId(playbackId, {
+  type: 'video',
+  expiration: `${expiresIn}s`
+  // params removed to allow casting devices
+});
+```
+
+**Security is still maintained because**:
+- Access control happens in `getPlaybackUrl()` before URL generation
+- URLs still expire after 7 days
+- Signed URLs prevent unauthorized direct access to playback IDs
+- Only authenticated users who pass access checks get URLs
+
+### Deployment Status
+
+✅ **Frontend** (Cloudflare Pages):
+- `public/js/video-player.js` - Event listeners and session management
+- Auto-deployed via GitHub push
+
+✅ **Backend** (Firebase Functions):
+- `src/backend/functions/src/mux.ts` - Casting-friendly signed URLs
+- Deployed via `firebase deploy --only functions`
 
 ---
 
-**Status**: ✅ Fixed - Chromecast casting now works properly with full session management and seamless device transitions.
+**Status**: ✅ **FULLY FIXED** - Chromecast casting now works end-to-end with:
+1. Proper session event detection
+2. Casting-compatible Mux signed URLs  
+3. Seamless device transitions with timestamp continuity
 
