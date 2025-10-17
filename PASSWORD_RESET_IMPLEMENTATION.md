@@ -14,7 +14,24 @@ Your project already has **everything needed** for custom password reset:
 
 ## 🎯 What You Need to Do
 
-### 1. Disable Firebase's Default Password Page (5 minutes)
+### 1. Configure Firebase (10 minutes)
+
+#### A. Add Authorized Domains (REQUIRED)
+
+**⚠️ IMPORTANT:** You must authorize your domain in Firebase or password reset links will fail.
+
+1. Go to [Firebase Console → Authentication → Settings](https://console.firebase.google.com/project/tim-burton-docuseries/authentication/settings)
+2. Scroll to **"Authorized domains"** section
+3. Click **"Add domain"**
+4. Add these domains:
+   - `timburton-dev.webflow.io`
+   - `tim-burton-docuseries.pages.dev`
+   - Any production domains
+5. Click **"Save"**
+
+**Why:** Firebase blocks password reset links to unauthorized domains. Without this, you'll get `auth/unauthorized-continue-uri` errors and no emails will send.
+
+#### B. Disable Firebase's Default Password Page
 
 **Option A: Firebase Console** (Recommended)
 
@@ -256,7 +273,8 @@ Cloudflare Pages will automatically deploy the new file to:
 ## ✅ Testing Checklist
 
 - [ ] **Deploy:** Commit and push `password-reset-page.js` to trigger Cloudflare deployment
-- [ ] **Firebase Console:** Customize action URL to your Webflow site
+- [ ] **Firebase Authorized Domains:** Add `timburton-dev.webflow.io` and `tim-burton-docuseries.pages.dev` to Firebase Console
+- [ ] **Firebase Action URL:** Customize action URL to your Webflow site
 - [ ] **Webflow:** Build password recovery modal with correct attributes
 - [ ] **Webflow:** Create `/reset-password` page with form and script reference
 - [ ] **Test Modal:** Click "Forgot Password?" → Enter email → See success message

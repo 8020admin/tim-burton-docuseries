@@ -21,6 +21,15 @@
    - Project support email: your email
    - OAuth Client ID (from Google Cloud Console)
 
+#### **Authorized Domains (Required for Password Reset):**
+1. Go to **"Authentication"** → **"Settings"** tab
+2. Scroll to **"Authorized domains"** section
+3. Click **"Add domain"** and add:
+   - `timburton-dev.webflow.io`
+   - `tim-burton-docuseries.pages.dev`
+   - Any production domains
+4. **Important:** Without authorized domains, password reset links will fail with `auth/unauthorized-continue-uri` error
+
 #### **Email Templates (Custom Password Reset):**
 1. Go to **"Authentication"** → **"Templates"** tab
 2. Click on **"Password reset"** template
